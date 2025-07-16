@@ -1,0 +1,36 @@
+// Example giast program - Counter app
+state {
+  count = 0;
+}
+
+logic {
+  function add(x) {
+    count = count + x;
+  }
+  
+  function reset() {
+    count = 0;
+  }
+}
+
+init {
+  add(1);
+}
+
+ui {
+  Container {
+    Button {
+      text: "Click me {{count}}";
+      onClick: add(1);
+    }
+    
+    Button {
+      text: "Reset";
+      onClick: reset();
+    }
+    
+    Text {
+      text: "Current count: {{count}}";
+    }
+  }
+} 
