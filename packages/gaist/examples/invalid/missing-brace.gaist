@@ -1,0 +1,10 @@
+// Missing opening brace in logic section
+state {
+  count = 0;
+}
+
+logic
+  function test() {
+    count = 1;
+  }
+} 

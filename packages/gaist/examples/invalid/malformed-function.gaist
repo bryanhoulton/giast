@@ -1,0 +1,10 @@
+// Malformed function definition
+state {
+  count = 0;
+}
+
+logic {
+  function test( {
+    count = 1;
+  }
+} 

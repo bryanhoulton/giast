@@ -1,0 +1,30 @@
+// Various expression examples
+state {
+  x = 10;
+  y = 5;
+  name = "Alice";
+  isReady = false;
+}
+
+logic {
+  function mathOperations() {
+    x = x + y;
+    y = x - y;
+    x = x * 2;
+    y = y / 2;
+  }
+  
+  function comparisons() {
+    isReady = x == y;
+    isReady = x != y;
+  }
+  
+  function logicalOps() {
+    isReady = true && false;
+    isReady = true || false;
+  }
+  
+  function templates() {
+    name = "Hello {{name}}!";
+  }
+} 

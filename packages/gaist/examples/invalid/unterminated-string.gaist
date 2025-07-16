@@ -1,0 +1,5 @@
+// Unterminated string literal
+state {
+  name = "unterminated string;
+  age = 25;
+} 

@@ -1,0 +1,6 @@
+// Basic state example
+state {
+  name = "John";
+  age = 25;
+  isActive = true;
+} 

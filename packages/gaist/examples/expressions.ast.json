@@ -1,0 +1,200 @@
+{
+  "spec": "giast/0.1",
+  "state": {
+    "vars": [
+      {
+        "name": "x",
+        "init": {
+          "kind": "literal",
+          "value": 10
+        }
+      },
+      {
+        "name": "y",
+        "init": {
+          "kind": "literal",
+          "value": 5
+        }
+      },
+      {
+        "name": "name",
+        "init": {
+          "kind": "literal",
+          "value": "Alice"
+        }
+      },
+      {
+        "name": "isReady",
+        "init": {
+          "kind": "literal",
+          "value": false
+        }
+      }
+    ]
+  },
+  "logic": {
+    "funcs": [
+      {
+        "name": "mathOperations",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "x",
+            "expr": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "var",
+                "name": "x"
+              },
+              "right": {
+                "kind": "var",
+                "name": "y"
+              }
+            }
+          },
+          {
+            "kind": "assign",
+            "target": "y",
+            "expr": {
+              "kind": "binary",
+              "op": "-",
+              "left": {
+                "kind": "var",
+                "name": "x"
+              },
+              "right": {
+                "kind": "var",
+                "name": "y"
+              }
+            }
+          },
+          {
+            "kind": "assign",
+            "target": "x",
+            "expr": {
+              "kind": "binary",
+              "op": "*",
+              "left": {
+                "kind": "var",
+                "name": "x"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 2
+              }
+            }
+          },
+          {
+            "kind": "assign",
+            "target": "y",
+            "expr": {
+              "kind": "binary",
+              "op": "/",
+              "left": {
+                "kind": "var",
+                "name": "y"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 2
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "comparisons",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "isReady",
+            "expr": {
+              "kind": "binary",
+              "op": "==",
+              "left": {
+                "kind": "var",
+                "name": "x"
+              },
+              "right": {
+                "kind": "var",
+                "name": "y"
+              }
+            }
+          },
+          {
+            "kind": "assign",
+            "target": "isReady",
+            "expr": {
+              "kind": "binary",
+              "op": "!=",
+              "left": {
+                "kind": "var",
+                "name": "x"
+              },
+              "right": {
+                "kind": "var",
+                "name": "y"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "logicalOps",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "isReady",
+            "expr": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "literal",
+                "value": true
+              },
+              "right": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          },
+          {
+            "kind": "assign",
+            "target": "isReady",
+            "expr": {
+              "kind": "binary",
+              "op": "||",
+              "left": {
+                "kind": "literal",
+                "value": true
+              },
+              "right": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "templates",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "name",
+            "expr": {
+              "kind": "literal",
+              "value": "Hello {{name}}!"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "init": []
+}

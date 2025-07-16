@@ -1,0 +1,166 @@
+{
+  "spec": "giast/0.1",
+  "state": {
+    "vars": [
+      {
+        "name": "score",
+        "init": {
+          "kind": "literal",
+          "value": 85
+        }
+      },
+      {
+        "name": "grade",
+        "init": {
+          "kind": "literal",
+          "value": "F"
+        }
+      },
+      {
+        "name": "passed",
+        "init": {
+          "kind": "literal",
+          "value": false
+        }
+      }
+    ]
+  },
+  "logic": {
+    "funcs": [
+      {
+        "name": "calculateGrade",
+        "params": [],
+        "body": [
+          {
+            "kind": "if",
+            "cond": {
+              "kind": "binary",
+              "op": ">=",
+              "left": {
+                "kind": "var",
+                "name": "score"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 90
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "target": "grade",
+                "expr": {
+                  "kind": "literal",
+                  "value": "A"
+                }
+              },
+              {
+                "kind": "assign",
+                "target": "passed",
+                "expr": {
+                  "kind": "literal",
+                  "value": true
+                }
+              }
+            ],
+            "else": [
+              {
+                "kind": "if",
+                "cond": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "var",
+                    "name": "score"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 80
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "target": "grade",
+                    "expr": {
+                      "kind": "literal",
+                      "value": "B"
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "target": "passed",
+                    "expr": {
+                      "kind": "literal",
+                      "value": true
+                    }
+                  }
+                ],
+                "else": [
+                  {
+                    "kind": "if",
+                    "cond": {
+                      "kind": "binary",
+                      "op": ">=",
+                      "left": {
+                        "kind": "var",
+                        "name": "score"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": 70
+                      }
+                    },
+                    "then": [
+                      {
+                        "kind": "assign",
+                        "target": "grade",
+                        "expr": {
+                          "kind": "literal",
+                          "value": "C"
+                        }
+                      },
+                      {
+                        "kind": "assign",
+                        "target": "passed",
+                        "expr": {
+                          "kind": "literal",
+                          "value": true
+                        }
+                      }
+                    ],
+                    "else": [
+                      {
+                        "kind": "assign",
+                        "target": "grade",
+                        "expr": {
+                          "kind": "literal",
+                          "value": "F"
+                        }
+                      },
+                      {
+                        "kind": "assign",
+                        "target": "passed",
+                        "expr": {
+                          "kind": "literal",
+                          "value": false
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "init": [
+    {
+      "kind": "call",
+      "func": "calculateGrade",
+      "args": []
+    }
+  ]
+}

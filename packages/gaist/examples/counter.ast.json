@@ -1,0 +1,118 @@
+{
+  "spec": "giast/0.1",
+  "state": {
+    "vars": [
+      {
+        "name": "count",
+        "init": {
+          "kind": "literal",
+          "value": 0
+        }
+      },
+      {
+        "name": "step",
+        "init": {
+          "kind": "literal",
+          "value": 1
+        }
+      }
+    ]
+  },
+  "logic": {
+    "funcs": [
+      {
+        "name": "increment",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "count",
+            "expr": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "var",
+                "name": "count"
+              },
+              "right": {
+                "kind": "var",
+                "name": "step"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "decrement",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "count",
+            "expr": {
+              "kind": "binary",
+              "op": "-",
+              "left": {
+                "kind": "var",
+                "name": "count"
+              },
+              "right": {
+                "kind": "var",
+                "name": "step"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "reset",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "count",
+            "expr": {
+              "kind": "literal",
+              "value": 0
+            }
+          }
+        ]
+      },
+      {
+        "name": "setStep",
+        "params": [
+          {
+            "name": "newStep"
+          }
+        ],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "step",
+            "expr": {
+              "kind": "var",
+              "name": "newStep"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "init": [
+    {
+      "kind": "call",
+      "func": "setStep",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "kind": "call",
+      "func": "increment",
+      "args": []
+    }
+  ]
+}

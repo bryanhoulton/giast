@@ -1,0 +1,64 @@
+{
+  "name": "gaist",
+  "version": "1.0.0",
+  "description": "Core compiler and runtime for the Gaist domain-specific language",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "bin": {
+    "gaist": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node dist/test-runner.js && node dist/cli.js examples",
+    "test:examples": "node dist/cli.js examples",
+    "prepublishOnly": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./compiler": {
+      "import": "./dist/compiler.js",
+      "types": "./dist/compiler.d.ts"
+    },
+    "./runtime": {
+      "import": "./dist/runtime.js",
+      "types": "./dist/runtime.d.ts"
+    },
+    "./grammar": {
+      "import": "./dist/grammar.js",
+      "types": "./dist/grammar.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "examples",
+    "README.md"
+  ],
+  "keywords": [
+    "compiler",
+    "dsl",
+    "language",
+    "parser",
+    "tokenizer",
+    "cli"
+  ],
+  "devDependencies": {
+    "@types/node": "^24.0.14",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/gaist.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/gaist/issues"
+  },
+  "homepage": "https://github.com/your-org/gaist#readme",
+  "license": "MIT"
+}

@@ -1,0 +1,28 @@
+// Counter example with logic and init
+state {
+  count = 0;
+  step = 1;
+}
+
+logic {
+  function increment() {
+    count = count + step;
+  }
+  
+  function decrement() {
+    count = count - step;
+  }
+  
+  function reset() {
+    count = 0;
+  }
+  
+  function setStep(newStep) {
+    step = newStep;
+  }
+}
+
+init {
+  setStep(2);
+  increment();
+} 

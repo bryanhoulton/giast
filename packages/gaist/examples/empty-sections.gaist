@@ -1,0 +1,9 @@
+// Empty sections example
+state {
+}
+
+logic {
+}
+
+init {
+} 

@@ -1,0 +1,32 @@
+{
+  "spec": "giast/0.1",
+  "state": {
+    "vars": [
+      {
+        "name": "name",
+        "init": {
+          "kind": "literal",
+          "value": "John"
+        }
+      },
+      {
+        "name": "age",
+        "init": {
+          "kind": "literal",
+          "value": 25
+        }
+      },
+      {
+        "name": "isActive",
+        "init": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    ]
+  },
+  "logic": {
+    "funcs": []
+  },
+  "init": []
+}

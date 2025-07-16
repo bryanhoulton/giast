@@ -1,0 +1,35 @@
+// Function parameters example
+state {
+  result = 0;
+  message = "";
+}
+
+logic {
+  function noParams() {
+    result = 42;
+  }
+  
+  function oneParam(value) {
+    result = value;
+  }
+  
+  function twoParams(a, b) {
+    result = a + b;
+  }
+  
+  function threeParams(x, y, z) {
+    result = x * y + z;
+  }
+  
+  function buildMessage(greeting, name) {
+    message = "{{greeting}}, {{name}}!";
+  }
+}
+
+init {
+  noParams();
+  oneParam(100);
+  twoParams(10, 20);
+  threeParams(2, 3, 4);
+  buildMessage("Hello", "World");
+} 

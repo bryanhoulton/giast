@@ -1,0 +1,18 @@
+// Example gaist program - Counter app (UI-agnostic)
+state {
+  count = 0;
+}
+
+logic {
+  function add(x) {
+    count = count + x;
+  }
+  
+  function reset() {
+    count = 0;
+  }
+}
+
+init {
+  add(1);
+} 

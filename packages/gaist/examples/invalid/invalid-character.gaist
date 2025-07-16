@@ -1,0 +1,5 @@
+// Invalid character in code
+state {
+  count = 0;
+  name = "test"@;
+} 

@@ -1,0 +1,10 @@
+// Unexpected token in expression
+state {
+  count = 0;
+}
+
+logic {
+  function test() {
+    count = + * 5;
+  }
+} 

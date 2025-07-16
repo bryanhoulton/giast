@@ -1,0 +1,59 @@
+{
+  "name": "gaist-react",
+  "version": "1.0.0",
+  "description": "React components and runtime for the Gaist domain-specific language",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./components": {
+      "import": "./dist/component.js",
+      "types": "./dist/component.d.ts"
+    },
+    "./demo": {
+      "import": "./dist/demo.js",
+      "types": "./dist/demo.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "react",
+    "components",
+    "gaist",
+    "ui",
+    "runtime"
+  ],
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^24.0.14",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "typescript": "^5.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/gaist.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/gaist/issues"
+  },
+  "homepage": "https://github.com/your-org/gaist#readme",
+  "license": "MIT"
+}

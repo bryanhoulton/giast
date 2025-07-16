@@ -1,0 +1,210 @@
+{
+  "spec": "giast/0.1",
+  "state": {
+    "vars": [
+      {
+        "name": "result",
+        "init": {
+          "kind": "literal",
+          "value": 0
+        }
+      },
+      {
+        "name": "message",
+        "init": {
+          "kind": "literal",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "logic": {
+    "funcs": [
+      {
+        "name": "noParams",
+        "params": [],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "result",
+            "expr": {
+              "kind": "literal",
+              "value": 42
+            }
+          }
+        ]
+      },
+      {
+        "name": "oneParam",
+        "params": [
+          {
+            "name": "value"
+          }
+        ],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "result",
+            "expr": {
+              "kind": "var",
+              "name": "value"
+            }
+          }
+        ]
+      },
+      {
+        "name": "twoParams",
+        "params": [
+          {
+            "name": "a"
+          },
+          {
+            "name": "b"
+          }
+        ],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "result",
+            "expr": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "var",
+                "name": "a"
+              },
+              "right": {
+                "kind": "var",
+                "name": "b"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "threeParams",
+        "params": [
+          {
+            "name": "x"
+          },
+          {
+            "name": "y"
+          },
+          {
+            "name": "z"
+          }
+        ],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "result",
+            "expr": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "binary",
+                "op": "*",
+                "left": {
+                  "kind": "var",
+                  "name": "x"
+                },
+                "right": {
+                  "kind": "var",
+                  "name": "y"
+                }
+              },
+              "right": {
+                "kind": "var",
+                "name": "z"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "buildMessage",
+        "params": [
+          {
+            "name": "greeting"
+          },
+          {
+            "name": "name"
+          }
+        ],
+        "body": [
+          {
+            "kind": "assign",
+            "target": "message",
+            "expr": {
+              "kind": "literal",
+              "value": "{{greeting}}, {{name}}!"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "init": [
+    {
+      "kind": "call",
+      "func": "noParams",
+      "args": []
+    },
+    {
+      "kind": "call",
+      "func": "oneParam",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 100
+        }
+      ]
+    },
+    {
+      "kind": "call",
+      "func": "twoParams",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 10
+        },
+        {
+          "kind": "literal",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "kind": "call",
+      "func": "threeParams",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 2
+        },
+        {
+          "kind": "literal",
+          "value": 3
+        },
+        {
+          "kind": "literal",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "kind": "call",
+      "func": "buildMessage",
+      "args": [
+        {
+          "kind": "literal",
+          "value": "Hello"
+        },
+        {
+          "kind": "literal",
+          "value": "World"
+        }
+      ]
+    }
+  ]
+}

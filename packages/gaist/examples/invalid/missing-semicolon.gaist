@@ -1,0 +1,11 @@
+// Missing semicolon in state declaration
+state {
+  count = 0
+  name = "test";
+}
+
+logic {
+  function test() {
+    count = 1;
+  }
+} 

@@ -1,0 +1,32 @@
+// Conditional statements example
+state {
+  score = 85;
+  grade = "F";
+  passed = false;
+}
+
+logic {
+  function calculateGrade() {
+    if score >= 90 {
+      grade = "A";
+      passed = true;
+    } else {
+      if score >= 80 {
+        grade = "B";
+        passed = true;
+      } else {
+        if score >= 70 {
+          grade = "C";
+          passed = true;
+        } else {
+          grade = "F";
+          passed = false;
+        }
+      }
+    }
+  }
+}
+
+init {
+  calculateGrade();
+} 
