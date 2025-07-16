@@ -86,7 +86,12 @@ export function CompilerDemo() {
   return (
     <div className="w-full h-full grid grid-cols-2">
       <div className="flex flex-col gap-4">
-        <h2>Giast Compiler Demo</h2>
+        <h2 className="text-4xl font-bold">Giast Demo</h2>
+        <p className="text-lg">
+          Giast is a generative interface abstract syntax tree, shipped with a
+          compiler for easy use. It can also be used via a JSON AST instead,
+          which makes it ideal for output by LLMs.
+        </p>
 
         <textarea
           value={code}

@@ -48,7 +48,10 @@ export function render(args: RenderArgs): React.ReactNode {
       );
     case "Column":
       return (
-        <div key={index}>
+        <div
+          className="flex flex-col gap-2 border border-dashed border-gray-500 rounded-lg p-2"
+          key={index}
+        >
           {ui.children?.map((child, i) =>
             render({ ...args, ui: child, index: i, scope })
           )}
@@ -56,7 +59,10 @@ export function render(args: RenderArgs): React.ReactNode {
       );
     case "Container":
       return (
-        <div key={index}>
+        <div
+          className="flex gap-2 border border-dashed border-gray-500 rounded-lg p-2"
+          key={index}
+        >
           {ui.children?.map((child, i) =>
             render({ ...args, ui: child, index: i, scope })
           )}
