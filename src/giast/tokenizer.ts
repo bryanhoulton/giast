@@ -186,7 +186,6 @@ export class Tokenizer {
   }
 
   private tokenizeString(): void {
-    const start = this.position;
     this.advance(); // consume opening quote
 
     let value = "";
