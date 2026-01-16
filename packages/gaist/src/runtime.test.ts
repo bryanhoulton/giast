@@ -1,13 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import {
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 
-import { Program } from "./grammar.js";
+import { Program } from './grammar.js';
 import {
   ExpressionError,
   FunctionError,
   Runtime,
   RuntimeError,
   TypeError,
-} from "./runtime.js";
+} from './runtime.js';
 
 // ============================================================================
 // Test Fixtures
@@ -335,6 +340,233 @@ describe("Runtime", () => {
           right: { kind: "literal", value: 0 },
         })
       ).toThrow(ExpressionError);
+    });
+
+    describe("built-in functions", () => {
+      it("should evaluate randInt(min, max)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        for (let i = 0; i < 100; i++) {
+          const result = runtime.evaluateExpr({
+            kind: "call",
+            func: "randInt",
+            args: [
+              { kind: "literal", value: 1 },
+              { kind: "literal", value: 10 },
+            ],
+          });
+
+          expect(result).toBeGreaterThanOrEqual(1);
+          expect(result).toBeLessThanOrEqual(10);
+          expect(Number.isInteger(result)).toBe(true);
+        }
+      });
+
+      it("should evaluate rand()", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        for (let i = 0; i < 100; i++) {
+          const result = runtime.evaluateExpr({
+            kind: "call",
+            func: "rand",
+            args: [],
+          });
+
+          expect(result).toBeGreaterThanOrEqual(0);
+          expect(result).toBeLessThan(1);
+        }
+      });
+
+      it("should evaluate min(...args)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "min",
+            args: [
+              { kind: "literal", value: 5 },
+              { kind: "literal", value: 3 },
+              { kind: "literal", value: 8 },
+            ],
+          })
+        ).toBe(3);
+      });
+
+      it("should evaluate max(...args)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "max",
+            args: [
+              { kind: "literal", value: 5 },
+              { kind: "literal", value: 3 },
+              { kind: "literal", value: 8 },
+            ],
+          })
+        ).toBe(8);
+      });
+
+      it("should evaluate abs(value)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "abs",
+            args: [{ kind: "literal", value: -5 }],
+          })
+        ).toBe(5);
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "abs",
+            args: [{ kind: "literal", value: 5 }],
+          })
+        ).toBe(5);
+      });
+
+      it("should evaluate floor(value)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "floor",
+            args: [{ kind: "literal", value: 3.7 }],
+          })
+        ).toBe(3);
+      });
+
+      it("should evaluate ceil(value)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "ceil",
+            args: [{ kind: "literal", value: 3.2 }],
+          })
+        ).toBe(4);
+      });
+
+      it("should evaluate round(value)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "round",
+            args: [{ kind: "literal", value: 3.4 }],
+          })
+        ).toBe(3);
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "round",
+            args: [{ kind: "literal", value: 3.6 }],
+          })
+        ).toBe(4);
+      });
+
+      it("should evaluate len(string)", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "len",
+            args: [{ kind: "literal", value: "hello" }],
+          })
+        ).toBe(5);
+      });
+
+      it("should throw FunctionError for unknown function", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(() =>
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "unknownFunc",
+            args: [],
+          })
+        ).toThrow(FunctionError);
+      });
+
+      it("should throw FunctionError for wrong number of arguments", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(() =>
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "randInt",
+            args: [{ kind: "literal", value: 1 }], // Missing second arg
+          })
+        ).toThrow(FunctionError);
+      });
+
+      it("should throw FunctionError for wrong argument types", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        expect(() =>
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "abs",
+            args: [{ kind: "literal", value: "not a number" }],
+          })
+        ).toThrow(FunctionError);
+      });
+
+      it("should allow nested function calls in expressions", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        // abs(min(-5, -10)) should be 10
+        expect(
+          runtime.evaluateExpr({
+            kind: "call",
+            func: "abs",
+            args: [
+              {
+                kind: "call",
+                func: "min",
+                args: [
+                  { kind: "literal", value: -5 },
+                  { kind: "literal", value: -10 },
+                ],
+              },
+            ],
+          })
+        ).toBe(10);
+      });
+
+      it("should work with function calls in binary expressions", () => {
+        const runtime = new Runtime({ program: createCounterProgram() });
+
+        // abs(-5) + max(3, 7) = 5 + 7 = 12
+        expect(
+          runtime.evaluateExpr({
+            kind: "binary",
+            op: "+",
+            left: {
+              kind: "call",
+              func: "abs",
+              args: [{ kind: "literal", value: -5 }],
+            },
+            right: {
+              kind: "call",
+              func: "max",
+              args: [
+                { kind: "literal", value: 3 },
+                { kind: "literal", value: 7 },
+              ],
+            },
+          })
+        ).toBe(12);
+      });
     });
   });
 

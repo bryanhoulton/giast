@@ -1,4 +1,8 @@
-import { type ReactNode, useCallback, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useState,
+} from 'react';
 
 import type {
   Catalog,
@@ -8,7 +12,7 @@ import type {
   GaistProgram,
   Statement,
   UIElement,
-} from "./catalog.js";
+} from './catalog.js';
 
 // ============================================================================
 // Types
@@ -139,6 +143,38 @@ class GaistRuntime<TState extends Record<string, unknown>> {
         const right = this.evaluate(expr.right, params);
         return this.evalBinaryOp(expr.op, left, right);
       }
+      case "call": {
+        const args = expr.args.map((a) => this.evaluate(a, params));
+        return this.evalBuiltinFunc(expr.func, args);
+      }
+    }
+  }
+
+  private evalBuiltinFunc(name: string, args: unknown[]): unknown {
+    switch (name) {
+      case "randInt": {
+        const [min, max] = args as [number, number];
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+      case "rand":
+        return Math.random();
+      case "min":
+        return Math.min(...(args as number[]));
+      case "max":
+        return Math.max(...(args as number[]));
+      case "abs":
+        return Math.abs(args[0] as number);
+      case "floor":
+        return Math.floor(args[0] as number);
+      case "ceil":
+        return Math.ceil(args[0] as number);
+      case "round":
+        return Math.round(args[0] as number);
+      case "len":
+        return (args[0] as string).length;
+      default:
+        console.warn(`[GaistRuntime] Unknown built-in function: ${name}`);
+        return null;
     }
   }
 
@@ -318,7 +354,39 @@ function evaluateExpr(expr: unknown, state: Record<string, unknown>): unknown {
           return null;
       }
     }
+    case "call": {
+      const args = e.args.map((a) => evaluateExpr(a, state));
+      return evalBuiltinFunc(e.func, args);
+    }
     default:
       return expr;
+  }
+}
+
+function evalBuiltinFunc(name: string, args: unknown[]): unknown {
+  switch (name) {
+    case "randInt": {
+      const [min, max] = args as [number, number];
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    case "rand":
+      return Math.random();
+    case "min":
+      return Math.min(...(args as number[]));
+    case "max":
+      return Math.max(...(args as number[]));
+    case "abs":
+      return Math.abs(args[0] as number);
+    case "floor":
+      return Math.floor(args[0] as number);
+    case "ceil":
+      return Math.ceil(args[0] as number);
+    case "round":
+      return Math.round(args[0] as number);
+    case "len":
+      return (args[0] as string).length;
+    default:
+      console.warn(`[GaistRenderer] Unknown built-in function: ${name}`);
+      return null;
   }
 }

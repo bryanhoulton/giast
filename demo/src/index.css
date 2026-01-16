@@ -41,3 +41,7 @@ body {
 code {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
 }
+
+button {
+  cursor: pointer;
+}

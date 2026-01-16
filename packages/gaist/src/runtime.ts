@@ -12,6 +12,117 @@ import {
 import { Scope } from './scope.js';
 
 // ============================================================================
+// Built-in Functions
+// ============================================================================
+
+type BuiltinFn = (args: Literal[]) => Literal;
+
+/**
+ * Registry of built-in functions available in Gaist expressions
+ */
+const BUILTIN_FUNCTIONS: Record<string, BuiltinFn> = {
+  // Random number generation
+  randInt: (args) => {
+    if (args.length !== 2) {
+      throw new FunctionError("randInt", "expected 2 arguments (min, max)");
+    }
+    const [min, max] = args;
+    if (typeof min !== "number" || typeof max !== "number") {
+      throw new FunctionError("randInt", "arguments must be numbers");
+    }
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  },
+  
+  rand: (args) => {
+    if (args.length !== 0) {
+      throw new FunctionError("rand", "expected 0 arguments");
+    }
+    return Math.random();
+  },
+
+  // Math functions
+  min: (args) => {
+    if (args.length < 2) {
+      throw new FunctionError("min", "expected at least 2 arguments");
+    }
+    for (const arg of args) {
+      if (typeof arg !== "number") {
+        throw new FunctionError("min", "all arguments must be numbers");
+      }
+    }
+    return Math.min(...(args as number[]));
+  },
+
+  max: (args) => {
+    if (args.length < 2) {
+      throw new FunctionError("max", "expected at least 2 arguments");
+    }
+    for (const arg of args) {
+      if (typeof arg !== "number") {
+        throw new FunctionError("max", "all arguments must be numbers");
+      }
+    }
+    return Math.max(...(args as number[]));
+  },
+
+  abs: (args) => {
+    if (args.length !== 1) {
+      throw new FunctionError("abs", "expected 1 argument");
+    }
+    const [value] = args;
+    if (typeof value !== "number") {
+      throw new FunctionError("abs", "argument must be a number");
+    }
+    return Math.abs(value);
+  },
+
+  floor: (args) => {
+    if (args.length !== 1) {
+      throw new FunctionError("floor", "expected 1 argument");
+    }
+    const [value] = args;
+    if (typeof value !== "number") {
+      throw new FunctionError("floor", "argument must be a number");
+    }
+    return Math.floor(value);
+  },
+
+  ceil: (args) => {
+    if (args.length !== 1) {
+      throw new FunctionError("ceil", "expected 1 argument");
+    }
+    const [value] = args;
+    if (typeof value !== "number") {
+      throw new FunctionError("ceil", "argument must be a number");
+    }
+    return Math.ceil(value);
+  },
+
+  round: (args) => {
+    if (args.length !== 1) {
+      throw new FunctionError("round", "expected 1 argument");
+    }
+    const [value] = args;
+    if (typeof value !== "number") {
+      throw new FunctionError("round", "argument must be a number");
+    }
+    return Math.round(value);
+  },
+
+  // String functions
+  len: (args) => {
+    if (args.length !== 1) {
+      throw new FunctionError("len", "expected 1 argument");
+    }
+    const [value] = args;
+    if (typeof value !== "string") {
+      throw new FunctionError("len", "argument must be a string");
+    }
+    return value.length;
+  },
+};
+
+// ============================================================================
 // Error Types
 // ============================================================================
 
@@ -282,6 +393,20 @@ export class Runtime {
           
         case "var":
           return scope.get(expr.name);
+          
+        case "call": {
+          // First check built-in functions
+          const builtin = BUILTIN_FUNCTIONS[expr.func];
+          if (builtin) {
+            const args = expr.args.map((arg) => helper(arg, scope));
+            return builtin(args);
+          }
+          
+          // Then check user-defined functions (that return a value)
+          // Note: Currently user-defined functions in Gaist are statements, not expressions
+          // This could be extended in the future to support returning values
+          throw new FunctionError(expr.func, "not found (built-in functions: randInt, rand, min, max, abs, floor, ceil, round, len)");
+        }
           
         case "binary": {
           const left = helper(expr.left, scope);

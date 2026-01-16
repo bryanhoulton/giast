@@ -1,6 +1,8 @@
 import {
+  type Expression,
   type GaistProgram,
   parseUI,
+  type Statement,
   type UIElement,
 } from 'gaist-react';
 
@@ -76,6 +78,19 @@ function generateDSLPrompt(): string {
     "- Conditionals: `if condition { ... } else { ... }`",
     "- Operators: +, -, *, /, ==, !=, <, <=, >, >=, &&, ||",
     "",
+    "### Built-in Functions (use in expressions)",
+    "- `randInt(min, max)` - random integer between min and max (inclusive)",
+    "- `rand()` - random float between 0 and 1",
+    "- `min(a, b, ...)` - minimum of values",
+    "- `max(a, b, ...)` - maximum of values", 
+    "- `abs(n)` - absolute value",
+    "- `floor(n)` - round down",
+    "- `ceil(n)` - round up",
+    "- `round(n)` - round to nearest integer",
+    "- `len(str)` - string length",
+    "",
+    "Example: `score = randInt(1, 100);` or `clamped = max(0, min(value, 100));`",
+    "",
     "## UI Section",
     "- Components use PascalCase names",
     "- Props in parentheses: `Component(prop: value, prop2: value2)`",
@@ -83,6 +98,7 @@ function generateDSLPrompt(): string {
     "- Children in braces: `Card { Child() }`",
     "- Actions: `Button(label: \"Go\") { onClick: funcName }`",
     "- Action with args: `Button(label: \"Add\") { onClick: add(5) }`",
+    "- Conditional visibility: `Component(prop: value, visible: boolVar)` - shows/hides based on state",
     "",
     "### Available Components:",
     "",
@@ -227,6 +243,42 @@ function toggle() {
 }
 \`\`\`
 
+## Conditional Visibility
+
+Use the \`visible\` prop to show/hide components based on state. The value must be a state variable (boolean):
+
+\`\`\`
+state {
+  isLoggedIn = false;
+  isLoggedOut = true;
+  showDetails = false;
+}
+
+logic {
+  function login() {
+    isLoggedIn = true;
+    isLoggedOut = false;
+  }
+  function logout() {
+    isLoggedIn = false;
+    isLoggedOut = true;
+  }
+}
+
+ui {
+  Column {
+    Text(content: "Welcome back!", visible: isLoggedIn)
+    Text(content: "Please log in", visible: isLoggedOut)
+    Button(label: "Show Details") { onClick: toggleDetails }
+    Card(visible: showDetails) {
+      Text(content: "Here are the details...")
+    }
+  }
+}
+\`\`\`
+
+For showing opposite states (logged in vs logged out), use TWO separate boolean variables and update both in your toggle function.
+
 ## Output Format
 
 Output ONLY the DSL code. No markdown fences, no explanations. Just the raw DSL starting with \`state {\` or \`logic {\` or \`ui {\`.`;
@@ -301,8 +353,8 @@ function parseDSL(dsl: string): ParsedProgram {
   return { state, logic, uiDsl };
 }
 
-function parseStatements(code: string): GaistProgram["logic"][0]["body"] {
-  const statements: GaistProgram["logic"][0]["body"] = [];
+function parseStatements(code: string): Statement[] {
+  const statements: Statement[] = [];
   let remaining = code.trim();
   
   while (remaining.length > 0) {
@@ -367,7 +419,7 @@ function parseStatements(code: string): GaistProgram["logic"][0]["body"] {
   return statements;
 }
 
-function parseExpression(expr: string): GaistProgram["logic"][0]["body"][0] extends { expr: infer E } ? E : never {
+function parseExpression(expr: string): Expression {
   expr = expr.trim();
   
   // Check for binary operators (in order of precedence)
@@ -408,7 +460,7 @@ function parseExpression(expr: string): GaistProgram["logic"][0]["body"][0] exte
             op,
             left: parseExpression(left),
             right: parseExpression(right),
-          } as ReturnType<typeof parseExpression>;
+          };
         }
       }
     }
@@ -421,24 +473,55 @@ function parseExpression(expr: string): GaistProgram["logic"][0]["body"][0] exte
   
   // String literal
   if ((expr.startsWith('"') && expr.endsWith('"')) || (expr.startsWith("'") && expr.endsWith("'"))) {
-    return { kind: "literal", value: expr.slice(1, -1) } as ReturnType<typeof parseExpression>;
+    return { kind: "literal", value: expr.slice(1, -1) };
   }
   
   // Boolean literal
   if (expr === "true") {
-    return { kind: "literal", value: true } as ReturnType<typeof parseExpression>;
+    return { kind: "literal", value: true };
   }
   if (expr === "false") {
-    return { kind: "literal", value: false } as ReturnType<typeof parseExpression>;
+    return { kind: "literal", value: false };
   }
   
   // Number literal
   if (!isNaN(Number(expr))) {
-    return { kind: "literal", value: Number(expr) } as ReturnType<typeof parseExpression>;
+    return { kind: "literal", value: Number(expr) };
+  }
+  
+  // Function call: funcName(args)
+  const funcMatch = expr.match(/^(\w+)\s*\((.*)?\)$/);
+  if (funcMatch) {
+    const func = funcMatch[1];
+    const argsStr = funcMatch[2]?.trim() || "";
+    
+    // Parse arguments, handling nested function calls
+    const args: Expression[] = [];
+    if (argsStr) {
+      let depth = 0;
+      let current = "";
+      
+      for (let i = 0; i < argsStr.length; i++) {
+        const char = argsStr[i];
+        if (char === "(") depth++;
+        if (char === ")") depth--;
+        if (char === "," && depth === 0) {
+          args.push(parseExpression(current.trim()));
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      if (current.trim()) {
+        args.push(parseExpression(current.trim()));
+      }
+    }
+    
+    return { kind: "call", func, args };
   }
   
   // Variable reference
-  return { kind: "var", name: expr } as ReturnType<typeof parseExpression>;
+  return { kind: "var", name: expr };
 }
 
 // ============================================================================
@@ -448,6 +531,7 @@ function parseExpression(expr: string): GaistProgram["logic"][0]["body"][0] exte
 export interface StreamCallbacks {
   onToken?: (partialDsl: string) => void;
   onRetry?: (attempt: number, error: string) => void;
+  signal?: AbortSignal;
 }
 
 export async function generateUI(
@@ -456,8 +540,8 @@ export async function generateUI(
   callbacks?: StreamCallbacks | ((attempt: number, error: string) => void)
 ): Promise<GenerateResult> {
   // Support old signature for backwards compatibility
-  const { onToken, onRetry } = typeof callbacks === 'function' 
-    ? { onToken: undefined, onRetry: callbacks }
+  const { onToken, onRetry, signal } = typeof callbacks === 'function' 
+    ? { onToken: undefined, onRetry: callbacks, signal: undefined }
     : (callbacks ?? {});
 
   const client = new Anthropic({
@@ -492,7 +576,7 @@ export async function generateUI(
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages,
-      });
+      }, { signal });
 
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
@@ -540,6 +624,14 @@ export async function generateUI(
         dsl: dslText,
       };
     } catch (error) {
+      // Check if aborted
+      if (signal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
+        return {
+          success: false,
+          error: "Generation stopped",
+        };
+      }
+
       if (error instanceof SyntaxError) {
         lastError = `Invalid syntax: ${error.message}`;
       } else if (error instanceof Error) {

@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useRef,
   useState,
 } from 'react';
 
@@ -97,6 +98,7 @@ export function Demo() {
   const [error, setError] = useState<string | null>(null);
   const [retryInfo, setRetryInfo] = useState<string | null>(null);
   const [outputTab, setOutputTab] = useState<OutputTab>("dsl");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleApiKeyChange = (value: string) => {
     setApiKey(value);
@@ -114,6 +116,9 @@ export function Demo() {
     const previousDsl = dsl;
     const previousProgram = program;
 
+    // Create new AbortController for this generation
+    abortControllerRef.current = new AbortController();
+
     setIsGenerating(true);
     setError(null);
     setRetryInfo(null);
@@ -127,20 +132,30 @@ export function Demo() {
         // Reset to previous on retry
         setDsl(previousDsl);
       },
+      signal: abortControllerRef.current.signal,
     });
 
     setIsGenerating(false);
     setRetryInfo(null);
+    abortControllerRef.current = null;
 
     if (result.success) {
       setProgram(result.program);
       setDsl(result.dsl);
       setError(null);
     } else {
-      // Reset to previous on final error
-      setDsl(previousDsl);
-      setProgram(previousProgram);
-      setError(result.error);
+      // Reset to previous on final error (unless stopped by user)
+      if (result.error !== "Generation stopped") {
+        setDsl(previousDsl);
+        setProgram(previousProgram);
+        setError(result.error);
+      }
+    }
+  };
+
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -242,14 +257,27 @@ Example: Create a counter with increment, decrement, and reset buttons. Show the
                 </div>
               )}
 
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !prompt.trim() || !apiKey.trim()}
-                className="mt-4 px-4 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-full hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0 flex items-center justify-center gap-2"
-              >
-                {isGenerating && <Spinner />}
-                {isGenerating ? "Generating..." : "Generate UI"}
-              </button>
+              <div className="mt-4 flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !prompt.trim() || !apiKey.trim()}
+                  className="flex-1 px-4 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-full hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  {isGenerating && <Spinner />}
+                  {isGenerating ? "Generating..." : "Generate UI"}
+                </button>
+                {isGenerating && (
+                  <button
+                    onClick={handleStop}
+                    className="w-9 h-9 bg-[#f5f5f5] hover:bg-[#eee] rounded-full flex items-center justify-center transition-colors"
+                    title="Stop generation"
+                  >
+                    <svg className="w-3.5 h-3.5 text-[#666]" fill="currentColor" viewBox="0 0 16 16">
+                      <rect x="3" y="3" width="10" height="10" rx="1" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

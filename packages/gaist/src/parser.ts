@@ -53,16 +53,6 @@ export class Parser {
         program.logic = this.parseLogic();
       } else if (this.match(TokenType.INIT)) {
         program.init = this.parseInit();
-      } else if (this.match(TokenType.UI)) {
-        // UI section is parsed separately by gaist-react's parseUI function
-        // Skip the UI block for now
-        this.consume(TokenType.LEFT_BRACE, "Expected '{' after 'ui'");
-        let braceDepth = 1;
-        while (!this.isAtEnd() && braceDepth > 0) {
-          if (this.peek().type === TokenType.LEFT_BRACE) braceDepth++;
-          if (this.peek().type === TokenType.RIGHT_BRACE) braceDepth--;
-          this.advance();
-        }
       } else {
         throw new ParseError(
           `Unexpected token: ${this.peek().value}`,
@@ -347,7 +337,21 @@ export class Parser {
     }
 
     if (this.match(TokenType.IDENTIFIER)) {
-      return { kind: "var", name: this.previous().value };
+      const name = this.previous().value;
+      
+      // Check if this is a function call
+      if (this.match(TokenType.LEFT_PAREN)) {
+        const args: Expr[] = [];
+        if (!this.check(TokenType.RIGHT_PAREN)) {
+          do {
+            args.push(this.parseExpression());
+          } while (this.match(TokenType.COMMA));
+        }
+        this.consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments");
+        return { kind: "call", func: name, args };
+      }
+      
+      return { kind: "var", name };
     }
 
     if (this.match(TokenType.LEFT_PAREN)) {

@@ -31,6 +31,13 @@ export interface VarExpr {
   name: string;
 }
 
+/** Function call expression — for built-in or user-defined functions that return a value */
+export interface CallExpr {
+  kind: "call";
+  func: string;
+  args: Expr[];
+}
+
 /** Binary operators supported in the minimal grammar */
 export type BinOp =
   | "+"
@@ -55,7 +62,7 @@ export interface BinExpr {
 }
 
 /** Union of every Expression variant */
-export type Expr = LiteralExpr | VarExpr | BinExpr;
+export type Expr = LiteralExpr | VarExpr | BinExpr | CallExpr;
 
 /* ------------------------------------------------------------------
  * 2.  Statements (reducers only — no side effects)
@@ -118,27 +125,7 @@ export interface State {
 }
 
 /* ------------------------------------------------------------------
- * 5.  UI layer (component tree)
- * ------------------------------------------------------------------*/
-
-/** Action binding for UI events */
-export interface ActionCall {
-  func: string;
-  args?: Expr[];
-}
-
-/** UI element node */
-export interface UIElement {
-  type: string;
-  props?: Record<string, Literal>;
-  children?: UIElement[];
-  onClick?: ActionCall;
-  onSubmit?: ActionCall;
-  visible?: Expr;
-}
-
-/* ------------------------------------------------------------------
- * 6.  Program (full AST)
+ * 5.  Program (full AST)
  * ------------------------------------------------------------------*/
 
 export interface Program {
@@ -146,5 +133,4 @@ export interface Program {
   state: State;
   logic: Logic;
   init: Stmt[];
-  ui?: UIElement;
 }

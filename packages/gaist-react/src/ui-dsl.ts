@@ -288,6 +288,7 @@ class Parser {
    *   Text(content: "Hello")
    *   Button(label: "Click") { onClick: handleClick }
    *   Card { Text(content: "Hi") }
+   *   Text(content: "Hidden", visible: isShowing)
    */
   private parseElement(): UIElement {
     const typeToken = this.consume("IDENT", "Expected component name");
@@ -305,8 +306,11 @@ class Parser {
 
     // Parse props if present
     let props: Record<string, unknown> = {};
+    let visible: Expression | undefined;
     if (this.check("LPAREN")) {
-      props = this.parseProps(componentName, schema);
+      const parsed = this.parsePropsWithVisible(componentName, schema);
+      props = parsed.props;
+      visible = parsed.visible;
     }
 
     // Parse action or children if present
@@ -354,6 +358,7 @@ class Parser {
     if (onClick) element.onClick = onClick;
     if (onSubmit) element.onSubmit = onSubmit;
     if (children && children.length > 0) element.children = children;
+    if (visible) element.visible = visible;
 
     return element;
   }
@@ -367,21 +372,40 @@ class Parser {
     componentName: string,
     schema: { props: z.ZodObject<z.ZodRawShape> }
   ): Record<string, unknown> {
+    return this.parsePropsWithVisible(componentName, schema).props;
+  }
+
+  /**
+   * Parse props including the special "visible" prop which is an Expression.
+   * Returns both regular props and the visible expression separately.
+   */
+  private parsePropsWithVisible(
+    componentName: string,
+    schema: { props: z.ZodObject<z.ZodRawShape> }
+  ): { props: Record<string, unknown>; visible?: Expression } {
     this.consume("LPAREN", "Expected '('");
 
     const props: Record<string, unknown> = {};
+    let visible: Expression | undefined;
 
     if (!this.check("RPAREN")) {
       do {
         const keyToken = this.consume("IDENT", "Expected property name");
         const key = keyToken.value;
 
+        // Handle the special "visible" prop
+        if (key === "visible") {
+          this.consume("COLON", "Expected ':' after property name");
+          visible = this.parseExpression();
+          continue;
+        }
+
         // Validate prop exists in schema
         const propSchema = schema.props.shape[key];
         if (!propSchema) {
           const validProps = Object.keys(schema.props.shape);
           throw new ParseError(
-            `Unknown property '${key}' for component '${componentName}'. Valid props: ${validProps.join(", ") || "(none)"}`,
+            `Unknown property '${key}' for component '${componentName}'. Valid props: ${validProps.join(", ")}, visible`,
             keyToken.line,
             keyToken.column
           );
@@ -393,7 +417,7 @@ class Parser {
     }
 
     this.consume("RPAREN", "Expected ')'");
-    return props;
+    return { props, visible };
   }
 
   /**

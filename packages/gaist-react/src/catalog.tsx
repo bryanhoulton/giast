@@ -1,5 +1,6 @@
-import { z } from "zod";
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
+
+import { z } from 'zod';
 
 // ============================================================================
 // Schema Types (for LLM prompt generation)
@@ -81,7 +82,8 @@ export type Statement =
 export type Expression =
   | { kind: "literal"; value: unknown }
   | { kind: "var"; name: string }
-  | { kind: "binary"; op: string; left: Expression; right: Expression };
+  | { kind: "binary"; op: string; left: Expression; right: Expression }
+  | { kind: "call"; func: string; args: Expression[] };
 
 export type UIElement = {
   type: string;
@@ -173,6 +175,12 @@ export class Catalog {
     lines.push('Example: `"text": "Count: {{count}}"`');
     lines.push("");
 
+    lines.push("## Conditional Visibility");
+    lines.push("Any component can have an optional `visible` prop (an expression) to conditionally show/hide it.");
+    lines.push('Example: `"visible": { "kind": "var", "name": "isLoggedIn" }`');
+    lines.push('Example: `"visible": { "kind": "binary", "op": ">", "left": { "kind": "var", "name": "count" }, "right": { "kind": "literal", "value": 0 } }`');
+    lines.push("");
+
     return lines.join("\n");
   }
 
@@ -213,6 +221,9 @@ export class Catalog {
           properties.onClick = actionSchema;
           properties.onSubmit = actionSchema;
         }
+
+        // All components can have a visible expression
+        properties.visible = { $ref: "#/definitions/Expression" };
 
         return {
           type: "object",

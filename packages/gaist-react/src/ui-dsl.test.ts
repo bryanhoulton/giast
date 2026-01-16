@@ -531,6 +531,102 @@ describe("UI DSL Parser", () => {
       });
     });
   });
+
+  describe("visible prop", () => {
+    it("should parse visible prop with variable reference", () => {
+      const catalog = createTestCatalog();
+      const ui = parseUI(catalog, 'Text(content: "Secret", visible: isLoggedIn)');
+
+      expect(ui).toEqual({
+        type: "Text",
+        props: { content: "Secret" },
+        visible: { kind: "var", name: "isLoggedIn" },
+      });
+    });
+
+    it("should parse visible prop with boolean literal", () => {
+      const catalog = createTestCatalog();
+      const ui = parseUI(catalog, 'Text(content: "Always visible", visible: true)');
+
+      expect(ui).toEqual({
+        type: "Text",
+        props: { content: "Always visible" },
+        visible: { kind: "literal", value: true },
+      });
+    });
+
+    it("should parse visible with other props", () => {
+      const catalog = createTestCatalog();
+      const ui = parseUI(
+        catalog,
+        'Button(label: "Admin Only", size: "lg", visible: isAdmin)'
+      );
+
+      expect(ui).toEqual({
+        type: "Button",
+        props: { label: "Admin Only", size: "lg" },
+        visible: { kind: "var", name: "isAdmin" },
+      });
+    });
+
+    it("should parse visible on components with children", () => {
+      const catalog = createTestCatalog();
+      const ui = parseUI(
+        catalog,
+        `
+        Card(visible: showCard) {
+          Text(content: "Inside card")
+        }
+      `
+      );
+
+      expect(ui).toEqual({
+        type: "Card",
+        visible: { kind: "var", name: "showCard" },
+        children: [{ type: "Text", props: { content: "Inside card" } }],
+      });
+    });
+
+    it("should parse visible on nested elements", () => {
+      const catalog = createTestCatalog();
+      const ui = parseUI(
+        catalog,
+        `
+        Column {
+          Text(content: "Always shown")
+          Text(content: "Conditionally shown", visible: showExtra)
+        }
+      `
+      );
+
+      expect(ui).toEqual({
+        type: "Column",
+        children: [
+          { type: "Text", props: { content: "Always shown" } },
+          {
+            type: "Text",
+            props: { content: "Conditionally shown" },
+            visible: { kind: "var", name: "showExtra" },
+          },
+        ],
+      });
+    });
+
+    it("should parse visible with action", () => {
+      const catalog = createTestCatalog();
+      const ui = parseUI(
+        catalog,
+        'Button(label: "Delete", visible: canDelete) { onClick: handleDelete }'
+      );
+
+      expect(ui).toEqual({
+        type: "Button",
+        props: { label: "Delete" },
+        visible: { kind: "var", name: "canDelete" },
+        onClick: { func: "handleDelete" },
+      });
+    });
+  });
 });
 
 // ============================================================================
