@@ -1,47 +1,47 @@
 // Components
 export {
-  RuntimeComponent,
   ControlledRuntimeComponent,
   GaistErrorBoundary,
+  RuntimeComponent,
   useGaistRuntime,
 } from "./component.js";
 export type {
-  RuntimeComponentProps,
   ControlledRuntimeComponentProps,
+  RuntimeComponentProps,
   UseGaistRuntimeOptions,
 } from "./component.js";
 
 // Component Registry (legacy)
 export { defaultComponents } from "./registry.js";
 export type {
-  ComponentRegistry,
-  TextComponentProps,
+  BadgeComponentProps,
   ButtonComponentProps,
-  InputComponentProps,
   CardComponentProps,
   ColumnComponentProps,
-  RowComponentProps,
-  BadgeComponentProps,
-  DividerComponentProps,
+  ComponentRegistry,
   ContainerComponentProps,
+  DividerComponentProps,
+  InputComponentProps,
+  RowComponentProps,
+  TextComponentProps,
 } from "./registry.js";
 
 // Catalog API (recommended)
-export { createCatalog, Catalog } from "./catalog.js";
+export { Catalog, createCatalog } from "./catalog.js";
 export type {
-  ComponentSchema,
-  CatalogSchema,
-  ElementNode,
   ActionCall,
-  RenderContext,
-  ComponentRenderFn,
+  CatalogSchema,
   ComponentRegistry as CatalogComponentRegistry,
-  StateVar as CatalogStateVar,
-  FuncDef,
-  Statement as CatalogStatement,
+  ComponentRenderFn,
+  ComponentSchema,
+  ElementNode,
   Expression as CatalogExpression,
-  UIElement,
+  FuncDef,
   GaistProgram,
+  RenderContext,
+  Statement as CatalogStatement,
+  StateVar as CatalogStateVar,
+  UIElement,
 } from "./catalog.js";
 
 export { GaistRenderer } from "./catalog-renderer.js";
@@ -53,38 +53,36 @@ export type { RenderArgs } from "./render.js";
 
 // Re-export types from gaist
 export type {
+  BadgeNode,
+  ButtonNode,
+  CardNode,
+  ColumnNode,
+  ContainerNode,
+  DividerNode,
   Expr,
   Func,
   FuncParam,
+  InputNode,
   Literal,
+  LoggerConfig,
   Logic,
+  Program,
+  RowNode,
+  RuntimeConfig,
+  Scope,
   State,
   StateVar,
   Stmt,
-  Scope,
-  LoggerConfig,
-  // UI Node types
-  UINode,
   TextNode,
-  ButtonNode,
-  InputNode,
-  ColumnNode,
-  RowNode,
-  CardNode,
-  BadgeNode,
-  DividerNode,
-  ContainerNode,
-  // Program types
-  Program,
-  RuntimeConfig,
+  UINode,
 } from "./types.js";
 
 export {
+  ExpressionError,
+  FunctionError,
   Runtime,
   RuntimeError,
+  ScopeException,
   TypeError,
   VariableError,
-  FunctionError,
-  ExpressionError,
-  ScopeException,
 } from "./types.js";

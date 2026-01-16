@@ -1,7 +1,7 @@
 import type {
+  Expr,
   Func,
   FuncParam,
-  Expr,
   Literal,
   Logic,
   Program as CoreProgram,
@@ -9,25 +9,24 @@ import type {
   State,
   StateVar,
   Stmt,
-} from 'gaist';
+} from "gaist";
 
 export type { Expr, Func, FuncParam, Literal, Logic, State, StateVar, Stmt };
 
-export type Scope = import('gaist').Scope;
-
-export { Runtime } from 'gaist';
+export type Scope = import("gaist").Scope;
 
 // Re-export error types for convenience
 export {
+  ExpressionError,
+  FunctionError,
+  Runtime,
   RuntimeError,
+  ScopeException,
   TypeError,
   VariableError,
-  FunctionError,
-  ExpressionError,
-  ScopeException,
-} from 'gaist';
+} from "gaist";
 
-export type LoggerConfig = import('gaist').LoggerConfig;
+export type LoggerConfig = import("gaist").LoggerConfig;
 
 // ============================================================================
 // UI Node Types
@@ -75,7 +74,13 @@ export interface CardNode {
 export interface BadgeNode {
   type: "Badge";
   text?: string;
-  variant?: "default" | "secondary" | "outline" | "success" | "warning" | "destructive";
+  variant?:
+    | "default"
+    | "secondary"
+    | "outline"
+    | "success"
+    | "warning"
+    | "destructive";
 }
 
 export interface DividerNode {
@@ -88,11 +93,11 @@ export interface ContainerNode {
   children?: UINode[];
 }
 
-export type UINode = 
-  | TextNode 
-  | ButtonNode 
+export type UINode =
+  | TextNode
+  | ButtonNode
   | InputNode
-  | ColumnNode 
+  | ColumnNode
   | RowNode
   | CardNode
   | BadgeNode

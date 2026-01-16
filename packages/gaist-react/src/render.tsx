@@ -1,7 +1,7 @@
-import type { Scope, Stmt, UINode } from "./types.js";
-import { Runtime } from "./types.js";
 import type { ComponentRegistry } from "./registry.js";
 import { defaultComponents } from "./registry.js";
+import type { Scope, Stmt, UINode } from "./types.js";
+import { Runtime } from "./types.js";
 
 // ============================================================================
 // Types
@@ -123,7 +123,7 @@ export function render(args: RenderArgs): React.ReactNode {
 
     case "Input": {
       const Input = components.Input;
-      const currentValue = ui.value ? (scope.tryGet(ui.value) ?? "") : "";
+      const currentValue = ui.value ? scope.tryGet(ui.value) ?? "" : "";
       return (
         <Input
           key={index}

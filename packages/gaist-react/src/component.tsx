@@ -8,9 +8,9 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import type { ComponentRegistry } from "./registry.js";
 import { render } from "./render.js";
 import { Literal, Runtime, RuntimeConfig } from "./types.js";
-import type { ComponentRegistry } from "./registry.js";
 
 // ============================================================================
 // Error Boundary
