@@ -86,9 +86,6 @@ ui {
 type OutputTab = "dsl" | "json";
 
 export function Demo() {
-  const [apiKey, setApiKey] = useState(
-    () => localStorage.getItem("anthropic-api-key") || ""
-  );
   const [prompt, setPrompt] = useState("");
   const [program, setProgram] = useState<GaistProgram>(DEFAULT_PROGRAM);
   const [dsl, setDsl] = useState(DEFAULT_DSL);
@@ -100,17 +97,8 @@ export function Demo() {
   const [outputTab, setOutputTab] = useState<OutputTab>("dsl");
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const handleApiKeyChange = (value: string) => {
-    setApiKey(value);
-    localStorage.setItem("anthropic-api-key", value);
-  };
-
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-    if (!apiKey.trim()) {
-      setError("Please enter your Anthropic API key");
-      return;
-    }
 
     // Store previous state to restore on error
     const previousDsl = dsl;
@@ -123,7 +111,7 @@ export function Demo() {
     setError(null);
     setRetryInfo(null);
 
-    const result = await generateUI(apiKey, prompt, {
+    const result = await generateUI(prompt, {
       onToken: (partialDsl) => {
         setDsl(partialDsl);
       },
@@ -201,20 +189,6 @@ export function Demo() {
       <div className="flex-1 flex min-h-0">
         {/* Left Panel */}
         <div className="w-1/2 flex flex-col border-r border-[#eee] min-h-0">
-          {/* API Key Input */}
-          <div className="px-4 py-3 border-b border-[#eee] shrink-0">
-            <label className="block text-xs text-[#999] uppercase tracking-wide mb-2">
-              Anthropic API Key
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => handleApiKeyChange(e.target.value)}
-              placeholder="sk-ant-..."
-              className="w-full px-3 py-2 bg-[#fafafa] border border-[#eee] rounded-lg text-sm text-[#1a1a1a] placeholder-[#999] focus:outline-none focus:ring-2 focus:ring-[#1a1a1a] focus:border-transparent"
-            />
-          </div>
-
           {/* Prompt Input (Top) */}
           <div className="h-1/3 flex flex-col border-b border-[#eee] min-h-0">
             <div className="px-4 py-3 border-b border-[#f5f5f5] shrink-0">
@@ -231,8 +205,7 @@ export function Demo() {
                     e.key === "Enter" &&
                     (e.metaKey || e.ctrlKey) &&
                     !isGenerating &&
-                    prompt.trim() &&
-                    apiKey.trim()
+                    prompt.trim()
                   ) {
                     e.preventDefault();
                     handleGenerate();
@@ -260,7 +233,7 @@ Example: Create a counter with increment, decrement, and reset buttons. Show the
               <div className="mt-4 flex items-center gap-2 shrink-0">
                 <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !prompt.trim() || !apiKey.trim()}
+                  disabled={isGenerating || !prompt.trim()}
                   className="flex-1 px-4 py-2 bg-[#1a1a1a] text-white text-sm font-medium rounded-full hover:bg-[#333] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {isGenerating && <Spinner />}

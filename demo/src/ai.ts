@@ -6,8 +6,6 @@ import {
   type UIElement,
 } from 'gaist-react';
 
-import Anthropic from '@anthropic-ai/sdk';
-
 import { catalog } from './catalog';
 
 // ============================================================================
@@ -534,8 +532,54 @@ export interface StreamCallbacks {
   signal?: AbortSignal;
 }
 
+async function streamFromAPI(
+  prompt: string,
+  systemPrompt: string,
+  onToken: ((text: string) => void) | undefined,
+  signal: AbortSignal | undefined
+): Promise<string> {
+  const response = await fetch("/api/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt, systemPrompt }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `HTTP ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("No response body");
+  }
+
+  const decoder = new TextDecoder();
+  let dslText = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    dslText += chunk;
+
+    // Strip markdown fences for display
+    let displayDsl = dslText.trim();
+    if (displayDsl.startsWith("```")) {
+      displayDsl = displayDsl.replace(/^```[\w]*\n?/, "").replace(/\n?```$/, "");
+    }
+
+    onToken?.(displayDsl);
+  }
+
+  return dslText.trim();
+}
+
 export async function generateUI(
-  apiKey: string,
   prompt: string,
   callbacks?: StreamCallbacks | ((attempt: number, error: string) => void)
 ): Promise<GenerateResult> {
@@ -544,62 +588,23 @@ export async function generateUI(
     ? { onToken: undefined, onRetry: callbacks, signal: undefined }
     : (callbacks ?? {});
 
-  const client = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  });
-
   let lastError: string | undefined;
 
   // Try up to 3 times
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const messages: Anthropic.MessageParam[] = [];
+      const userPrompt = attempt === 1 
+        ? prompt 
+        : `${prompt}\n\nPrevious attempt had an error: ${lastError}\n\nPlease fix and output valid DSL.`;
 
-      if (attempt === 1) {
-        messages.push({
-          role: "user",
-          content: prompt,
-        });
-      } else {
-        messages.push({
-          role: "user",
-          content: `${prompt}\n\nPrevious attempt had an error: ${lastError}\n\nPlease fix and output valid DSL.`,
-        });
-      }
-
-      // Use streaming
-      let dslText = "";
-      
-      const stream = client.messages.stream({
-        model: "claude-sonnet-4-5",
-        max_tokens: 4096,
-        system: SYSTEM_PROMPT,
-        messages,
-      }, { signal });
-
-      for await (const event of stream) {
-        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-          dslText += event.delta.text;
-          
-          // Strip markdown fences for display
-          let displayDsl = dslText.trim();
-          if (displayDsl.startsWith("```")) {
-            displayDsl = displayDsl.replace(/^```[\w]*\n?/, "").replace(/\n?```$/, "");
-          }
-          
-          onToken?.(displayDsl);
-        }
-      }
-
-      dslText = dslText.trim();
+      let dslText = await streamFromAPI(userPrompt, SYSTEM_PROMPT, onToken, signal);
       
       // Strip markdown fences if present
       if (dslText.startsWith("```")) {
         dslText = dslText.replace(/^```[\w]*\n?/, "").replace(/\n?```$/, "");
       }
 
-      console.log("[Anthropic] Response:", dslText);
+      console.log("[API] Response:", dslText);
 
       // Parse the DSL
       const { state, logic, uiDsl } = parseDSL(dslText);

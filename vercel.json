@@ -1,8 +1,12 @@
 {
+  "framework": "vite",
   "buildCommand": "yarn build:packages && cd demo && yarn build",
   "outputDirectory": "demo/dist",
   "installCommand": "yarn install",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "devCommand": "cd demo && yarn dev --port $PORT",
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
 }

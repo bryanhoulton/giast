@@ -8,7 +8,8 @@
     "demo"
   ],
   "scripts": {
-    "dev": "yarn workspace gaist-demo dev",
+    "serve": "vercel dev",
+    "start": "yarn workspace gaist-demo dev",
     "build": "yarn build:packages",
     "build:gaist": "yarn workspace gaist build",
     "build:gaist-react": "yarn workspace gaist-react build",
@@ -16,6 +17,7 @@
     "test": "yarn workspace gaist test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@tailwindcss/postcss": "^4.1.11",
     "@tailwindcss/vite": "^4.1.11",
     "react": "^19.1.0",
@@ -24,11 +26,13 @@
   "devDependencies": {
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@vercel/node": "^5.5.23",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
+    "vercel": "^50.4.5",
     "vite": "^7.0.4"
   }
 }
