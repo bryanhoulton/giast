@@ -133,7 +133,8 @@ export function Landing() {
               We built Gaist to solve this problem. Gaist is a language for
               stateful, design-constrained UIs. An LLM can write expressive logic
               in tandem with a UI composed of components from a user-defined
-              catalog.
+              catalog. This program will compile into a design-safe, JSON-representable AST,
+              which will be rendered and executed by the built-in Gaist runtime.
             </p>
 
             <Example dsl={COUNTER_DSL} initialTab="rendered" title="counter" />
@@ -285,6 +286,84 @@ export function Landing() {
               <Comment>// bind state and actions to UI</Comment>{"\n"}
               <Keyword>ui</Keyword> {"{\n"}
               {"  "}Button(label: <Str>"Count: {"{{"}count{"}}"}"</Str>) {"{"} onClick: increment {"}\n"}
+              {"}"}
+            </CodeBlock>
+          </motion.div>
+        </section>
+
+        {/* Section 3: Built-in Functions */}
+        <section className="py-12 border-t border-[#eee]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-2xl font-bold text-[#1a1a1a] mb-6">
+              Built-ins
+            </h2>
+
+            <p className="text-lg text-[#666] mb-4">
+              Gaist includes built-in functions for common operations, available
+              in any expression. It also supports conditional visibility on any
+              component.
+            </p>
+
+            <h3 className="text-lg font-semibold text-[#1a1a1a] mt-8 mb-4">Functions</h3>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">randInt(min, max)</code>
+                <p className="text-sm text-[#666] mt-1">Random integer in range</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">rand()</code>
+                <p className="text-sm text-[#666] mt-1">Random float 0–1</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">min(a, b, ...)</code>
+                <p className="text-sm text-[#666] mt-1">Minimum of values</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">max(a, b, ...)</code>
+                <p className="text-sm text-[#666] mt-1">Maximum of values</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">abs(n)</code>
+                <p className="text-sm text-[#666] mt-1">Absolute value</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">round(n)</code>
+                <p className="text-sm text-[#666] mt-1">Round to nearest integer</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">floor(n) / ceil(n)</code>
+                <p className="text-sm text-[#666] mt-1">Round down / up</p>
+              </div>
+              <div className="p-4 border border-[#eee] rounded-lg">
+                <code className="text-sm font-mono text-[#1a1a1a]">len(s)</code>
+                <p className="text-sm text-[#666] mt-1">Length of string</p>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-semibold text-[#1a1a1a] mt-8 mb-4">Visibility</h3>
+
+            <p className="text-lg text-[#666] mb-6">
+              Any component can have a <code className="text-sm bg-[#f6f8fa] px-1.5 py-0.5 rounded">visible</code> prop
+              that accepts an expression. When the expression evaluates to false,
+              the component is not rendered.
+            </p>
+
+            <CodeBlock title="conditional visibility">
+              <Keyword>state</Keyword> {"{\n"}
+              {"  "}isLoggedIn = <Prop>false</Prop>;{"\n"}
+              {"  "}count = <Prop>0</Prop>;{"\n"}
+              {"}\n\n"}
+              <Keyword>ui</Keyword> {"{\n"}
+              {"  "}<Comment>// only show when logged in</Comment>{"\n"}
+              {"  "}Button(label: <Str>"Logout"</Str>, visible: isLoggedIn){"\n\n"}
+              {"  "}<Comment>// show when count {">"} 0</Comment>{"\n"}
+              {"  "}Text(content: <Str>"Count: {"{{"}count{"}}"}"</Str>, visible: count {">"} <Prop>0</Prop>){"\n"}
               {"}"}
             </CodeBlock>
           </motion.div>
