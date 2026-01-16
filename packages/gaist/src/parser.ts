@@ -54,7 +54,15 @@ export class Parser {
       } else if (this.match(TokenType.INIT)) {
         program.init = this.parseInit();
       } else if (this.match(TokenType.UI)) {
-        program.ui = this.parseUI();
+        // UI section is parsed separately by gaist-react's parseUI function
+        // Skip the UI block for now
+        this.consume(TokenType.LEFT_BRACE, "Expected '{' after 'ui'");
+        let braceDepth = 1;
+        while (!this.isAtEnd() && braceDepth > 0) {
+          if (this.peek().type === TokenType.LEFT_BRACE) braceDepth++;
+          if (this.peek().type === TokenType.RIGHT_BRACE) braceDepth--;
+          this.advance();
+        }
       } else {
         throw new ParseError(
           `Unexpected token: ${this.peek().value}`,

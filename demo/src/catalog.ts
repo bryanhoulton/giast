@@ -1,6 +1,9 @@
 import { createCatalog } from "gaist-react";
 import { z } from "zod";
 
+// Helper for props that can be either a literal value or an interpolated string like "{{varName}}"
+const numOrInterpolated = z.union([z.number(), z.string()]);
+
 export const catalog = createCatalog({
   components: {
     Card: {
@@ -73,6 +76,92 @@ export const catalog = createCatalog({
     Divider: {
       props: z.object({}),
       description: "Horizontal line separator",
+    },
+    Checkbox: {
+      props: z.object({
+        label: z.string().optional(),
+        bind: z.string(),
+      }),
+      description: "Checkbox input. 'bind' is the boolean state variable to sync with.",
+    },
+    Switch: {
+      props: z.object({
+        label: z.string().optional(),
+        bind: z.string(),
+      }),
+      description: "Toggle switch. 'bind' is the boolean state variable to sync with.",
+    },
+    Select: {
+      props: z.object({
+        placeholder: z.string().optional(),
+        bind: z.string(),
+        options: z.string(), // comma-separated options like "apple,banana,cherry"
+      }),
+      description: "Dropdown select. 'bind' is the state variable, 'options' is comma-separated values.",
+    },
+    Textarea: {
+      props: z.object({
+        placeholder: z.string().optional(),
+        bind: z.string(),
+        rows: numOrInterpolated.optional(),
+      }),
+      action: true,
+      description: "Multi-line text input. 'bind' is the state variable. Action fires on Cmd+Enter.",
+    },
+    Progress: {
+      props: z.object({
+        value: numOrInterpolated,
+        max: numOrInterpolated.optional(),
+      }),
+      description: "Progress bar. 'value' is current progress (can use {{varName}} for dynamic values), 'max' defaults to 100.",
+    },
+    Slider: {
+      props: z.object({
+        bind: z.string(),
+        min: numOrInterpolated.optional(),
+        max: numOrInterpolated.optional(),
+        step: numOrInterpolated.optional(),
+      }),
+      description: "Range slider input. 'bind' is the numeric state variable.",
+    },
+    Alert: {
+      props: z.object({
+        title: z.string().optional(),
+        message: z.string(),
+        variant: z.enum(["default", "success", "warning", "error", "info"]).optional(),
+      }),
+      description: "Alert message box with optional title.",
+    },
+    Avatar: {
+      props: z.object({
+        src: z.string().optional(),
+        fallback: z.string(),
+        size: z.enum(["sm", "md", "lg"]).optional(),
+      }),
+      description: "User avatar with image or fallback initials.",
+    },
+    Image: {
+      props: z.object({
+        src: z.string(),
+        alt: z.string().optional(),
+        width: numOrInterpolated.optional(),
+        height: numOrInterpolated.optional(),
+      }),
+      description: "Display an image.",
+    },
+    Link: {
+      props: z.object({
+        text: z.string(),
+        href: z.string(),
+        variant: z.enum(["default", "muted"]).optional(),
+      }),
+      description: "Clickable link that opens in new tab.",
+    },
+    Spacer: {
+      props: z.object({
+        size: z.enum(["sm", "md", "lg", "xl"]).optional(),
+      }),
+      description: "Empty space for layout purposes.",
     },
   },
 });

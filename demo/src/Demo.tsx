@@ -110,12 +110,23 @@ export function Demo() {
       return;
     }
 
+    // Store previous state to restore on error
+    const previousDsl = dsl;
+    const previousProgram = program;
+
     setIsGenerating(true);
     setError(null);
     setRetryInfo(null);
 
-    const result = await generateUI(apiKey, prompt, (attempt, err) => {
-      setRetryInfo(`Attempt ${attempt} failed: ${err}. Retrying...`);
+    const result = await generateUI(apiKey, prompt, {
+      onToken: (partialDsl) => {
+        setDsl(partialDsl);
+      },
+      onRetry: (attempt, err) => {
+        setRetryInfo(`Attempt ${attempt} failed: ${err}. Retrying...`);
+        // Reset to previous on retry
+        setDsl(previousDsl);
+      },
     });
 
     setIsGenerating(false);
@@ -126,6 +137,9 @@ export function Demo() {
       setDsl(result.dsl);
       setError(null);
     } else {
+      // Reset to previous on final error
+      setDsl(previousDsl);
+      setProgram(previousProgram);
       setError(result.error);
     }
   };
@@ -272,14 +286,18 @@ Example: Create a counter with increment, decrement, and reset buttons. Show the
               </button>
             </div>
             <div className="flex-1 overflow-auto p-4 min-h-0">
-              {isGenerating ? (
-                <div className="flex items-center justify-center h-full">
-                  <Spinner className="w-6 h-6 text-[#999]" />
+              {outputTab === "dsl" ? (
+                <div className="relative">
+                  {isGenerating && (
+                    <div className="absolute top-0 right-0 flex items-center gap-2 text-xs text-[#999]">
+                      <Spinner className="w-3 h-3" />
+                      <span>Streaming...</span>
+                    </div>
+                  )}
+                  <pre className={`text-xs font-mono whitespace-pre-wrap ${isGenerating ? "text-[#999]" : "text-[#666]"}`}>
+                    {dsl}
+                  </pre>
                 </div>
-              ) : outputTab === "dsl" ? (
-                <pre className="text-xs font-mono text-[#666] whitespace-pre-wrap">
-                  {dsl}
-                </pre>
               ) : (
                 <pre className="text-xs font-mono text-[#666] whitespace-pre-wrap">
                   {JSON.stringify(program, null, 2)}
@@ -309,20 +327,22 @@ Example: Create a counter with increment, decrement, and reset buttons. Show the
 
           <div className="flex-1 relative overflow-auto min-h-0">
             {/* Rendered Component */}
-            <div className="p-6">
-              {isGenerating ? (
-                <div className="flex items-center justify-center h-32">
-                  <Spinner className="w-6 h-6 text-[#999]" />
+            <div className="p-6 relative">
+              {isGenerating && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                  <div className="flex items-center gap-2 text-sm text-[#666]">
+                    <Spinner className="w-4 h-4" />
+                    <span>Generating...</span>
+                  </div>
                 </div>
-              ) : (
-                <GaistRenderer
-                  key={JSON.stringify(program)}
-                  catalog={catalog}
-                  components={components}
-                  program={program}
-                  onStateChange={handleStateChange}
-                />
               )}
+              <GaistRenderer
+                key={JSON.stringify(program)}
+                catalog={catalog}
+                components={components}
+                program={program}
+                onStateChange={handleStateChange}
+              />
             </div>
 
             {/* State Popover */}

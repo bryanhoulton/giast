@@ -442,14 +442,24 @@ function parseExpression(expr: string): GaistProgram["logic"][0]["body"][0] exte
 }
 
 // ============================================================================
-// Generate Function
+// Generate Function (Streaming)
 // ============================================================================
+
+export interface StreamCallbacks {
+  onToken?: (partialDsl: string) => void;
+  onRetry?: (attempt: number, error: string) => void;
+}
 
 export async function generateUI(
   apiKey: string,
   prompt: string,
-  onRetry?: (attempt: number, error: string) => void
+  callbacks?: StreamCallbacks | ((attempt: number, error: string) => void)
 ): Promise<GenerateResult> {
+  // Support old signature for backwards compatibility
+  const { onToken, onRetry } = typeof callbacks === 'function' 
+    ? { onToken: undefined, onRetry: callbacks }
+    : (callbacks ?? {});
+
   const client = new Anthropic({
     apiKey,
     dangerouslyAllowBrowser: true,
@@ -474,19 +484,31 @@ export async function generateUI(
         });
       }
 
-      const response = await client.messages.create({
+      // Use streaming
+      let dslText = "";
+      
+      const stream = client.messages.stream({
         model: "claude-sonnet-4-5",
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages,
       });
 
-      const textBlock = response.content.find((block) => block.type === "text");
-      if (!textBlock || textBlock.type !== "text") {
-        throw new Error("No text response from Claude");
+      for await (const event of stream) {
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          dslText += event.delta.text;
+          
+          // Strip markdown fences for display
+          let displayDsl = dslText.trim();
+          if (displayDsl.startsWith("```")) {
+            displayDsl = displayDsl.replace(/^```[\w]*\n?/, "").replace(/\n?```$/, "");
+          }
+          
+          onToken?.(displayDsl);
+        }
       }
 
-      let dslText = textBlock.text.trim();
+      dslText = dslText.trim();
       
       // Strip markdown fences if present
       if (dslText.startsWith("```")) {
