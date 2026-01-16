@@ -9,6 +9,7 @@ export enum TokenType {
   STATE = "STATE",
   LOGIC = "LOGIC",
   INIT = "INIT",
+  UI = "UI",
   FUNCTION = "FUNCTION",
   IF = "IF",
   ELSE = "ELSE",
@@ -36,6 +37,7 @@ export enum TokenType {
   RIGHT_BRACE = "RIGHT_BRACE",
   LEFT_PAREN = "LEFT_PAREN",
   RIGHT_PAREN = "RIGHT_PAREN",
+  ARROW = "ARROW",
 
   // Special
   EOF = "EOF",
@@ -67,6 +69,7 @@ export class Tokenizer {
     state: TokenType.STATE,
     logic: TokenType.LOGIC,
     init: TokenType.INIT,
+    ui: TokenType.UI,
     function: TokenType.FUNCTION,
     if: TokenType.IF,
     else: TokenType.ELSE,
@@ -288,7 +291,12 @@ export class Tokenizer {
         this.addToken(TokenType.PLUS, "+");
         break;
       case "-":
-        this.addToken(TokenType.MINUS, "-");
+        if (this.source[this.position] === ">") {
+          this.advance();
+          this.addToken(TokenType.ARROW, "->");
+        } else {
+          this.addToken(TokenType.MINUS, "-");
+        }
         break;
       case "*":
         this.addToken(TokenType.MULTIPLY, "*");

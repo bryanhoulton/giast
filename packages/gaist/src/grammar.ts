@@ -117,9 +117,34 @@ export interface State {
   // derived/computed values come in v0.2
 }
 
+/* ------------------------------------------------------------------
+ * 5.  UI layer (component tree)
+ * ------------------------------------------------------------------*/
+
+/** Action binding for UI events */
+export interface ActionCall {
+  func: string;
+  args?: Expr[];
+}
+
+/** UI element node */
+export interface UIElement {
+  type: string;
+  props?: Record<string, Literal>;
+  children?: UIElement[];
+  onClick?: ActionCall;
+  onSubmit?: ActionCall;
+  visible?: Expr;
+}
+
+/* ------------------------------------------------------------------
+ * 6.  Program (full AST)
+ * ------------------------------------------------------------------*/
+
 export interface Program {
   spec: typeof SPEC_VERSION;
   state: State;
   logic: Logic;
   init: Stmt[];
+  ui?: UIElement;
 }

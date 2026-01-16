@@ -1,6 +1,12 @@
-import Anthropic from "@anthropic-ai/sdk";
-import type { GaistProgram } from "gaist-react";
-import { catalog } from "./catalog";
+import {
+  type GaistProgram,
+  parseUI,
+  type UIElement,
+} from 'gaist-react';
+
+import Anthropic from '@anthropic-ai/sdk';
+
+import { catalog } from './catalog';
 
 // ============================================================================
 // Types
@@ -10,6 +16,7 @@ export type GenerateResult =
   | {
       success: true;
       program: GaistProgram;
+      dsl: string;
     }
   | {
       success: false;
@@ -17,85 +24,169 @@ export type GenerateResult =
     };
 
 // ============================================================================
+// DSL Prompt Generator
+// ============================================================================
+
+function generateDSLPrompt(): string {
+  const lines: string[] = [
+    "You generate UIs using a custom DSL syntax. Output a single DSL program with three sections:",
+    "",
+    "## DSL Format",
+    "",
+    "```",
+    "state {",
+    "  variableName = initialValue;",
+    "  anotherVar = \"string value\";",
+    "  isActive = false;",
+    "}",
+    "",
+    "logic {",
+    "  function funcName() {",
+    "    varName = expression;",
+    "  }",
+    "  ",
+    "  function withParams(param1, param2) {",
+    "    varName = param1 + param2;",
+    "  }",
+    "  ",
+    "  function conditional() {",
+    "    if condition {",
+    "      varName = value;",
+    "    } else {",
+    "      varName = otherValue;",
+    "    }",
+    "  }",
+    "}",
+    "",
+    "ui {",
+    "  ComponentName(prop: value) {",
+    "    ChildComponent(prop: value)",
+    "  }",
+    "}",
+    "```",
+    "",
+    "## State Section",
+    "- Declare variables with `name = value;`",
+    "- Supported types: numbers, strings (quoted), booleans (true/false)",
+    "",
+    "## Logic Section", 
+    "- Define functions with `function name(params) { body }`",
+    "- Assignment: `varName = expression;`",
+    "- Function calls: `funcName(args);`",
+    "- Conditionals: `if condition { ... } else { ... }`",
+    "- Operators: +, -, *, /, ==, !=, <, <=, >, >=, &&, ||",
+    "",
+    "## UI Section",
+    "- Components use PascalCase names",
+    "- Props in parentheses: `Component(prop: value, prop2: value2)`",
+    "- String values use quotes: `content: \"Hello\"`",
+    "- Children in braces: `Card { Child() }`",
+    "- Actions: `Button(label: \"Go\") { onClick: funcName }`",
+    "- Action with args: `Button(label: \"Add\") { onClick: add(5) }`",
+    "",
+    "### Available Components:",
+    "",
+  ];
+
+  for (const [name, schema] of Object.entries(catalog.schema.components)) {
+    lines.push(`#### ${name}`);
+    if (schema.description) {
+      lines.push(schema.description);
+    }
+
+    const shape = schema.props.shape;
+    if (Object.keys(shape).length > 0) {
+      lines.push("Props:");
+      for (const [propName, propSchema] of Object.entries(shape)) {
+        lines.push(`  - ${propName}: ${describeZodType(propSchema)}`);
+      }
+    }
+
+    if (schema.children) {
+      lines.push("Children: yes");
+    }
+    if (schema.action) {
+      lines.push("Action: yes - add `{ onClick: funcName }` or `{ onSubmit: funcName }`");
+    }
+    lines.push("");
+  }
+
+  lines.push("### Text Interpolation");
+  lines.push("Use {{varName}} in string props to display state values.");
+  lines.push('Example: `content: "Count: {{count}}"`');
+  lines.push("");
+
+  return lines.join("\n");
+}
+
+function describeZodType(schema: unknown): string {
+  const s = schema as { _def?: { typeName?: string; innerType?: unknown; values?: unknown[] } };
+  const typeName = s._def?.typeName;
+
+  switch (typeName) {
+    case "ZodString":
+      return "string";
+    case "ZodNumber":
+      return "number";
+    case "ZodBoolean":
+      return "boolean";
+    case "ZodEnum": {
+      const values = s._def?.values as string[] | undefined;
+      return values ? `"${values.join('" | "')}"` : "enum";
+    }
+    case "ZodOptional":
+      return `${describeZodType(s._def?.innerType)} (optional)`;
+    case "ZodDefault":
+      return `${describeZodType(s._def?.innerType)}`;
+    default:
+      return "any";
+  }
+}
+
+// ============================================================================
 // System Prompt
 // ============================================================================
 
-const SYSTEM_PROMPT = `${catalog.generatePrompt()}
+const SYSTEM_PROMPT = `${generateDSLPrompt()}
 
-## Example Program
+## Complete Example
 
-Here's a complete counter example:
+Here's a counter example:
 
-\`\`\`json
-{
-  "state": [
-    { "name": "count", "init": 0 }
-  ],
-  "logic": [
-    {
-      "name": "increment",
-      "body": [
-        {
-          "kind": "assign",
-          "target": "count",
-          "expr": {
-            "kind": "binary",
-            "op": "+",
-            "left": { "kind": "var", "name": "count" },
-            "right": { "kind": "literal", "value": 1 }
-          }
-        }
-      ]
-    },
-    {
-      "name": "add",
-      "params": ["amount"],
-      "body": [
-        {
-          "kind": "assign",
-          "target": "count",
-          "expr": {
-            "kind": "binary",
-            "op": "+",
-            "left": { "kind": "var", "name": "count" },
-            "right": { "kind": "var", "name": "amount" }
-          }
-        }
-      ]
-    },
-    {
-      "name": "reset",
-      "body": [
-        {
-          "kind": "assign",
-          "target": "count",
-          "expr": { "kind": "literal", "value": 0 }
-        }
-      ]
-    }
-  ],
-  "ui": {
-    "type": "Card",
-    "props": { "title": "Counter" },
-    "children": [
-      {
-        "type": "Column",
-        "props": { "gap": "lg" },
-        "children": [
-          { "type": "Text", "props": { "content": "Current count: {{count}}", "variant": "heading" } },
-          {
-            "type": "Row",
-            "props": { "gap": "sm" },
-            "children": [
-              { "type": "Button", "props": { "label": "-1", "variant": "outline" }, "onClick": { "func": "add", "args": [{ "kind": "literal", "value": -1 }] } },
-              { "type": "Button", "props": { "label": "+1", "variant": "outline" }, "onClick": { "func": "increment" } },
-              { "type": "Button", "props": { "label": "+10", "variant": "secondary" }, "onClick": { "func": "add", "args": [{ "kind": "literal", "value": 10 }] } }
-            ]
-          },
-          { "type": "Button", "props": { "label": "Reset", "variant": "ghost" }, "onClick": { "func": "reset" } }
-        ]
+\`\`\`
+state {
+  count = 0;
+}
+
+logic {
+  function increment() {
+    count = count + 1;
+  }
+  
+  function decrement() {
+    count = count - 1;
+  }
+  
+  function add(amount) {
+    count = count + amount;
+  }
+  
+  function reset() {
+    count = 0;
+  }
+}
+
+ui {
+  Card(title: "Counter") {
+    Column(gap: "lg") {
+      Text(content: "Current count: {{count}}", variant: "heading")
+      Row(gap: "sm") {
+        Button(label: "-1", variant: "outline") { onClick: decrement }
+        Button(label: "+1", variant: "outline") { onClick: increment }
+        Button(label: "+10", variant: "secondary") { onClick: add(10) }
       }
-    ]
+      Button(label: "Reset", variant: "ghost") { onClick: reset }
+    }
   }
 }
 \`\`\`
@@ -107,7 +198,7 @@ Here's a complete counter example:
 3. Use Column for vertical layouts, Row for horizontal
 4. Use appropriate text variants (heading for titles, muted for descriptions)
 5. Use appropriate button variants (destructive for delete, ghost for secondary actions)
-6. Always declare state variables before using them
+6. Always declare state variables before using them in UI
 7. Define functions in logic before referencing them in onClick
 
 ## IMPORTANT: Dynamic Text Pattern
@@ -115,102 +206,240 @@ Here's a complete counter example:
 The interpolation system ONLY supports simple variable replacement like \`{{varName}}\`.
 
 DO NOT use ternary expressions or JavaScript in templates:
-- WRONG: \`"label": "{{isLoggedIn}} ? 'Logout' : 'Login'"\`
-- WRONG: \`"content": "Count: {{count + 1}}"\`
+- WRONG: \`content: "{{isLoggedIn}} ? 'Logout' : 'Login'"\`
+- WRONG: \`content: "Count: {{count + 1}}"\`
 
-Instead, use STATE VARIABLES that get updated by your LOGIC functions:
-
-\`\`\`json
-{
-  "state": [
-    { "name": "isLoggedIn", "init": false },
-    { "name": "buttonLabel", "init": "Sign In" },
-    { "name": "statusText", "init": "Enter credentials" }
-  ],
-  "logic": [
-    {
-      "name": "login",
-      "body": [
-        { "kind": "assign", "target": "isLoggedIn", "expr": { "kind": "literal", "value": true } },
-        { "kind": "assign", "target": "buttonLabel", "expr": { "kind": "literal", "value": "Sign Out" } },
-        { "kind": "assign", "target": "statusText", "expr": { "kind": "literal", "value": "Welcome back!" } }
-      ]
-    },
-    {
-      "name": "logout",
-      "body": [
-        { "kind": "assign", "target": "isLoggedIn", "expr": { "kind": "literal", "value": false } },
-        { "kind": "assign", "target": "buttonLabel", "expr": { "kind": "literal", "value": "Sign In" } },
-        { "kind": "assign", "target": "statusText", "expr": { "kind": "literal", "value": "Enter credentials" } }
-      ]
-    }
-  ],
-  "ui": {
-    "type": "Button",
-    "props": { "label": "{{buttonLabel}}" },
-    "onClick": { "func": "login" }
-  }
-}
-\`\`\`
-
-This pattern: State holds the current text → Logic functions update the text → UI displays \`{{stateVar}}\`
+Instead, use STATE VARIABLES that get updated by your LOGIC functions.
 
 ## Conditional Actions (Toggle Pattern)
 
-For buttons that do different things based on state (like Login/Logout), use a SINGLE function that checks state internally:
+For buttons that do different things based on state (like Login/Logout), use a SINGLE function with if/else:
 
-\`\`\`json
-{
-  "name": "toggleAuth",
-  "body": [
-    {
-      "kind": "if",
-      "cond": { "kind": "var", "name": "isLoggedIn" },
-      "then": [
-        { "kind": "assign", "target": "isLoggedIn", "expr": { "kind": "literal", "value": false } },
-        { "kind": "assign", "target": "buttonLabel", "expr": { "kind": "literal", "value": "Sign In" } }
-      ],
-      "else": [
-        { "kind": "assign", "target": "isLoggedIn", "expr": { "kind": "literal", "value": true } },
-        { "kind": "assign", "target": "buttonLabel", "expr": { "kind": "literal", "value": "Sign Out" } }
-      ]
-    }
-  ]
-}
 \`\`\`
-
-The button always calls \`toggleAuth\` - the function handles the conditional logic internally.
-
-## Conditional Visibility
-
-Any UI element can have a \`visible\` expression. If it evaluates to false, the element is not rendered:
-
-\`\`\`json
-{
-  "type": "Text",
-  "props": { "content": "Welcome back!", "variant": "heading" },
-  "visible": { "kind": "var", "name": "isLoggedIn" }
-}
-\`\`\`
-
-You can use comparison expressions:
-
-\`\`\`json
-{
-  "type": "Badge",
-  "props": { "text": "Low stock!", "variant": "warning" },
-  "visible": {
-    "kind": "binary",
-    "op": "<",
-    "left": { "kind": "var", "name": "quantity" },
-    "right": { "kind": "literal", "value": 10 }
+function toggle() {
+  if isOn {
+    isOn = false;
+    label = "Turn On";
+  } else {
+    isOn = true;
+    label = "Turn Off";
   }
 }
 \`\`\`
 
-This is useful for showing/hiding elements based on state (e.g., show logout button only when logged in).
+## Output Format
 
-Output ONLY valid JSON. No markdown fences or explanations.`;
+Output ONLY the DSL code. No markdown fences, no explanations. Just the raw DSL starting with \`state {\` or \`logic {\` or \`ui {\`.`;
+
+// ============================================================================
+// DSL Parser (state/logic sections)
+// ============================================================================
+
+interface ParsedProgram {
+  state: GaistProgram["state"];
+  logic: GaistProgram["logic"];
+  uiDsl: string;
+}
+
+function parseDSL(dsl: string): ParsedProgram {
+  const state: GaistProgram["state"] = [];
+  const logic: GaistProgram["logic"] = [];
+  let uiDsl = "";
+
+  // Extract sections using regex
+  const stateMatch = dsl.match(/state\s*\{([\s\S]*?)\}(?=\s*(?:logic|ui|$))/);
+  const logicMatch = dsl.match(/logic\s*\{([\s\S]*?)\}(?=\s*(?:ui|$))/);
+  const uiMatch = dsl.match(/ui\s*\{([\s\S]*)\}$/);
+
+  // Parse state section
+  if (stateMatch) {
+    const stateBody = stateMatch[1];
+    const varMatches = stateBody.matchAll(/(\w+)\s*=\s*([^;]+);/g);
+    for (const match of varMatches) {
+      const name = match[1];
+      const valueStr = match[2].trim();
+      let init: unknown;
+      
+      if (valueStr === "true") {
+        init = true;
+      } else if (valueStr === "false") {
+        init = false;
+      } else if (valueStr.startsWith('"') || valueStr.startsWith("'")) {
+        init = valueStr.slice(1, -1);
+      } else if (!isNaN(Number(valueStr))) {
+        init = Number(valueStr);
+      } else {
+        init = valueStr;
+      }
+      
+      state.push({ name, init });
+    }
+  }
+
+  // Parse logic section
+  if (logicMatch) {
+    const logicBody = logicMatch[1];
+    const funcMatches = logicBody.matchAll(/function\s+(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}(?=\s*(?:function|$))/g);
+    
+    for (const match of funcMatches) {
+      const name = match[1];
+      const paramsStr = match[2].trim();
+      const bodyStr = match[3];
+      
+      const params = paramsStr ? paramsStr.split(",").map(p => p.trim()).filter(Boolean) : undefined;
+      const body = parseStatements(bodyStr);
+      
+      logic.push({ name, params, body });
+    }
+  }
+
+  // Extract UI section content
+  if (uiMatch) {
+    uiDsl = uiMatch[1].trim();
+  }
+
+  return { state, logic, uiDsl };
+}
+
+function parseStatements(code: string): GaistProgram["logic"][0]["body"] {
+  const statements: GaistProgram["logic"][0]["body"] = [];
+  let remaining = code.trim();
+  
+  while (remaining.length > 0) {
+    remaining = remaining.trim();
+    if (!remaining) break;
+    
+    // Check for if statement
+    const ifMatch = remaining.match(/^if\s+(.+?)\s*\{([\s\S]*?)\}(?:\s*else\s*\{([\s\S]*?)\})?/);
+    if (ifMatch) {
+      const condStr = ifMatch[1];
+      const thenStr = ifMatch[2];
+      const elseStr = ifMatch[3];
+      
+      statements.push({
+        kind: "if",
+        cond: parseExpression(condStr),
+        then: parseStatements(thenStr),
+        ...(elseStr ? { else: parseStatements(elseStr) } : {}),
+      });
+      
+      remaining = remaining.slice(ifMatch[0].length).trim();
+      continue;
+    }
+    
+    // Check for function call: funcName(args);
+    const callMatch = remaining.match(/^(\w+)\s*\(([^)]*)\)\s*;/);
+    if (callMatch) {
+      const func = callMatch[1];
+      const argsStr = callMatch[2].trim();
+      const args = argsStr ? argsStr.split(",").map(a => parseExpression(a.trim())) : [];
+      
+      statements.push({ kind: "call", func, args });
+      remaining = remaining.slice(callMatch[0].length).trim();
+      continue;
+    }
+    
+    // Check for assignment: varName = expr;
+    const assignMatch = remaining.match(/^(\w+)\s*=\s*([^;]+);/);
+    if (assignMatch) {
+      const target = assignMatch[1];
+      const exprStr = assignMatch[2];
+      
+      statements.push({
+        kind: "assign",
+        target,
+        expr: parseExpression(exprStr),
+      });
+      
+      remaining = remaining.slice(assignMatch[0].length).trim();
+      continue;
+    }
+    
+    // Skip unknown content
+    const nextSemi = remaining.indexOf(";");
+    if (nextSemi > -1) {
+      remaining = remaining.slice(nextSemi + 1).trim();
+    } else {
+      break;
+    }
+  }
+  
+  return statements;
+}
+
+function parseExpression(expr: string): GaistProgram["logic"][0]["body"][0] extends { expr: infer E } ? E : never {
+  expr = expr.trim();
+  
+  // Check for binary operators (in order of precedence)
+  const ops = ["||", "&&", "==", "!=", "<=", ">=", "<", ">", "+", "-", "*", "/"];
+  
+  for (const op of ops) {
+    // Find the operator, but not inside strings or parentheses
+    let depth = 0;
+    let inString = false;
+    let stringChar = "";
+    
+    for (let i = expr.length - 1; i >= 0; i--) {
+      const char = expr[i];
+      
+      if (inString) {
+        if (char === stringChar && expr[i - 1] !== "\\") {
+          inString = false;
+        }
+        continue;
+      }
+      
+      if (char === '"' || char === "'") {
+        inString = true;
+        stringChar = char;
+        continue;
+      }
+      
+      if (char === ")") depth++;
+      if (char === "(") depth--;
+      
+      if (depth === 0 && expr.slice(i, i + op.length) === op) {
+        const left = expr.slice(0, i).trim();
+        const right = expr.slice(i + op.length).trim();
+        
+        if (left && right) {
+          return {
+            kind: "binary",
+            op,
+            left: parseExpression(left),
+            right: parseExpression(right),
+          } as ReturnType<typeof parseExpression>;
+        }
+      }
+    }
+  }
+  
+  // Parenthesized expression
+  if (expr.startsWith("(") && expr.endsWith(")")) {
+    return parseExpression(expr.slice(1, -1));
+  }
+  
+  // String literal
+  if ((expr.startsWith('"') && expr.endsWith('"')) || (expr.startsWith("'") && expr.endsWith("'"))) {
+    return { kind: "literal", value: expr.slice(1, -1) } as ReturnType<typeof parseExpression>;
+  }
+  
+  // Boolean literal
+  if (expr === "true") {
+    return { kind: "literal", value: true } as ReturnType<typeof parseExpression>;
+  }
+  if (expr === "false") {
+    return { kind: "literal", value: false } as ReturnType<typeof parseExpression>;
+  }
+  
+  // Number literal
+  if (!isNaN(Number(expr))) {
+    return { kind: "literal", value: Number(expr) } as ReturnType<typeof parseExpression>;
+  }
+  
+  // Variable reference
+  return { kind: "var", name: expr } as ReturnType<typeof parseExpression>;
+}
 
 // ============================================================================
 // Generate Function
@@ -241,12 +470,12 @@ export async function generateUI(
       } else {
         messages.push({
           role: "user",
-          content: `${prompt}\n\nPrevious attempt had an error: ${lastError}\n\nPlease fix and output valid JSON only.`,
+          content: `${prompt}\n\nPrevious attempt had an error: ${lastError}\n\nPlease fix and output valid DSL.`,
         });
       }
 
       const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-5",
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages,
@@ -257,30 +486,40 @@ export async function generateUI(
         throw new Error("No text response from Claude");
       }
 
-      let jsonText = textBlock.text.trim();
-
-      // Strip markdown code fences if present
-      if (jsonText.startsWith("```")) {
-        jsonText = jsonText.replace(/^```[\w]*\n?/, "").replace(/\n?```$/, "");
+      let dslText = textBlock.text.trim();
+      
+      // Strip markdown fences if present
+      if (dslText.startsWith("```")) {
+        dslText = dslText.replace(/^```[\w]*\n?/, "").replace(/\n?```$/, "");
       }
 
-      console.log("[Anthropic] Response:", jsonText);
+      console.log("[Anthropic] Response:", dslText);
 
-      // Parse JSON
-      const program = JSON.parse(jsonText) as GaistProgram;
+      // Parse the DSL
+      const { state, logic, uiDsl } = parseDSL(dslText);
 
-      // Basic validation
-      if (!program.ui) {
-        throw new Error("Program missing 'ui' field");
+      // Parse the UI section
+      let ui: UIElement;
+      try {
+        ui = parseUI(catalog, uiDsl);
+      } catch (parseError) {
+        throw new Error(`UI parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
       }
+
+      const program: GaistProgram = {
+        state,
+        logic,
+        ui,
+      };
 
       return {
         success: true,
         program,
+        dsl: dslText,
       };
     } catch (error) {
       if (error instanceof SyntaxError) {
-        lastError = `Invalid JSON: ${error.message}`;
+        lastError = `Invalid syntax: ${error.message}`;
       } else if (error instanceof Error) {
         lastError = error.message;
       } else {

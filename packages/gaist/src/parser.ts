@@ -53,6 +53,8 @@ export class Parser {
         program.logic = this.parseLogic();
       } else if (this.match(TokenType.INIT)) {
         program.init = this.parseInit();
+      } else if (this.match(TokenType.UI)) {
+        program.ui = this.parseUI();
       } else {
         throw new ParseError(
           `Unexpected token: ${this.peek().value}`,

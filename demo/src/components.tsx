@@ -1,4 +1,4 @@
-import type { RenderContext, CatalogComponentRegistry } from "gaist-react";
+import type { RenderContext, ComponentRegistry } from "gaist-react";
 
 // ============================================================================
 // Utility
@@ -59,10 +59,10 @@ const badgeVariants: Record<string, string> = {
 // Components
 // ============================================================================
 
-export const components: CatalogComponentRegistry = {
+export const components: ComponentRegistry = {
   Card: ({ element, children }: RenderContext) => (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      {element.props.title && (
+      {element.props.title !== undefined && (
         <h3 className="text-lg font-semibold mb-4">{element.props.title as string}</h3>
       )}
       {children}
@@ -124,13 +124,29 @@ export const components: CatalogComponentRegistry = {
 
   Input: ({ element, state, setState, onAction }: RenderContext) => {
     const bind = element.props.bind as string;
-    const value = bind ? (state[bind] as string) ?? "" : "";
+    const rawValue = bind ? state[bind] : "";
     const type = (element.props.type as string) || "text";
+    // For number inputs, show empty string if value is 0 or empty, otherwise show the number
+    const displayValue = type === "number" && rawValue === "" ? "" : String(rawValue ?? "");
     return (
       <input
         type={type}
-        value={value}
-        onChange={(e) => bind && setState(bind, e.target.value)}
+        value={displayValue}
+        onChange={(e) => {
+          if (!bind) return;
+          // Coerce to number when type is "number"
+          if (type === "number") {
+            const strVal = e.target.value;
+            if (strVal === "") {
+              setState(bind, ""); // Keep empty string to show placeholder
+            } else {
+              const num = parseFloat(strVal);
+              setState(bind, isNaN(num) ? 0 : num);
+            }
+          } else {
+            setState(bind, e.target.value);
+          }
+        }}
         onKeyDown={(e) => e.key === "Enter" && onAction?.()}
         placeholder={element.props.placeholder as string}
         className={cn(

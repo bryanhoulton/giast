@@ -1,81 +1,65 @@
-// Components
-export {
-  ControlledRuntimeComponent,
-  GaistErrorBoundary,
-  RuntimeComponent,
-  useGaistRuntime,
-} from "./component.js";
-export type {
-  ControlledRuntimeComponentProps,
-  RuntimeComponentProps,
-  UseGaistRuntimeOptions,
-} from "./component.js";
+// ============================================================================
+// Catalog API - Define your own components
+// ============================================================================
 
-// Component Registry (legacy)
-export { defaultComponents } from "./registry.js";
-export type {
-  BadgeComponentProps,
-  ButtonComponentProps,
-  CardComponentProps,
-  ColumnComponentProps,
-  ComponentRegistry,
-  ContainerComponentProps,
-  DividerComponentProps,
-  InputComponentProps,
-  RowComponentProps,
-  TextComponentProps,
-} from "./registry.js";
-
-// Catalog API (recommended)
-export { Catalog, createCatalog } from "./catalog.js";
+export { Catalog, createCatalog } from './catalog.js';
 export type {
   ActionCall,
   CatalogSchema,
-  ComponentRegistry as CatalogComponentRegistry,
+  ComponentRegistry,
   ComponentRenderFn,
   ComponentSchema,
   ElementNode,
-  Expression as CatalogExpression,
+  Expression,
   FuncDef,
   GaistProgram,
   RenderContext,
-  Statement as CatalogStatement,
-  StateVar as CatalogStateVar,
+  Statement,
+  StateVar,
   UIElement,
-} from "./catalog.js";
+} from './catalog.js';
 
-export { GaistRenderer } from "./catalog-renderer.js";
-export type { GaistRendererProps } from "./catalog-renderer.js";
+// ============================================================================
+// Renderer - Render user-defined components
+// ============================================================================
 
-// Render utilities
-export { render, renderText } from "./render.js";
-export type { RenderArgs } from "./render.js";
+export { GaistRenderer } from './catalog-renderer.js';
+export type { GaistRendererProps } from './catalog-renderer.js';
 
-// Re-export types from gaist
+// ============================================================================
+// UI DSL Parser
+// ============================================================================
+
+export {
+  ParseError as UIDSLParseError,
+  parseUI,
+  parseUIElements,
+} from './ui-dsl.js';
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+export { GaistErrorBoundary } from './component.js';
+export type { GaistErrorBoundaryProps } from './component.js';
+
+// ============================================================================
+// Re-exports from gaist core
+// ============================================================================
+
 export type {
-  BadgeNode,
-  ButtonNode,
-  CardNode,
-  ColumnNode,
-  ContainerNode,
-  DividerNode,
   Expr,
   Func,
   FuncParam,
-  InputNode,
   Literal,
   LoggerConfig,
   Logic,
   Program,
-  RowNode,
   RuntimeConfig,
   Scope,
   State,
-  StateVar,
   Stmt,
-  TextNode,
-  UINode,
-} from "./types.js";
+} from './types.js';
 
 export {
   ExpressionError,
@@ -85,4 +69,4 @@ export {
   ScopeException,
   TypeError,
   VariableError,
-} from "./types.js";
+} from './types.js';
