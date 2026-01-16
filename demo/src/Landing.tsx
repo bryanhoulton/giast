@@ -93,7 +93,7 @@ export function Landing() {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] mb-8 leading-tight">
-              Expressive UIs from LLM
+              Expressive, design-safe generative UIs
             </h1>
 
             <p className="text-lg text-[#666] mb-4">
