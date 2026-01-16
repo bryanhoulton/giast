@@ -4,17 +4,16 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "demo"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "build:gaist": "cd packages/gaist && yarn build",
-    "build:gaist-react": "cd packages/gaist-react && yarn build",
+    "dev": "yarn workspace gaist-demo dev",
+    "build": "yarn build:packages",
+    "build:gaist": "yarn workspace gaist build",
+    "build:gaist-react": "yarn workspace gaist-react build",
     "build:packages": "yarn build:gaist && yarn build:gaist-react",
-    "test:gaist": "cd packages/gaist && yarn test"
+    "test": "yarn workspace gaist test"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.11",

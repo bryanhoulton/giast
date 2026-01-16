@@ -1,92 +1,112 @@
-// This file will temporarily define types that should come from the gaist package
-// In a real scenario, these would be imported from the published gaist package
+import type {
+  Func,
+  FuncParam,
+  Expr,
+  Literal,
+  Logic,
+  Program as CoreProgram,
+  RuntimeConfig as CoreRuntimeConfig,
+  State,
+  StateVar,
+  Stmt,
+} from 'gaist';
 
-export interface LoggerConfig {
-  printTypes: string[];
-  storeTypes: string[];
-}
+export type { Expr, Func, FuncParam, Literal, Logic, State, StateVar, Stmt };
 
-export interface RuntimeConfig {
-  program: Program;
-  loggerConfig?: LoggerConfig;
-}
+export type Scope = import('gaist').Scope;
 
-export interface Program {
-  spec: string;
-  state: State;
-  logic: Logic;
-  init: Stmt[];
-  ui: UINode;
-}
+export { Runtime } from 'gaist';
 
-export interface State {
-  vars: StateVar[];
-}
+// Re-export error types for convenience
+export {
+  RuntimeError,
+  TypeError,
+  VariableError,
+  FunctionError,
+  ExpressionError,
+  ScopeException,
+} from 'gaist';
 
-export interface StateVar {
-  name: string;
-  init: Expr;
-}
+export type LoggerConfig = import('gaist').LoggerConfig;
 
-export interface Logic {
-  funcs: Func[];
-}
+// ============================================================================
+// UI Node Types
+// ============================================================================
 
-export interface Func {
-  name: string;
-  params: FuncParam[];
-  body: Stmt[];
-}
-
-export interface FuncParam {
-  name: string;
-}
-
-export type Literal = string | number | boolean;
-
-export interface Expr {
-  type: "literal" | "variable" | "binary" | "template";
-  value?: Literal;
-  name?: string;
-  left?: Expr;
-  right?: Expr;
-  operator?: string;
-  template?: string;
-  expressions?: Expr[];
-}
-
-export interface Stmt {
-  type: "assign" | "call" | "if";
-  name?: string;
-  value?: Expr;
-  args?: Expr[];
-  condition?: Expr;
-  thenStmts?: Stmt[];
-  elseStmts?: Stmt[];
-}
-
-export interface UINode {
-  type: "Text" | "Button" | "Column" | "Container";
+export interface TextNode {
+  type: "Text";
   text?: string;
+  variant?: "default" | "muted" | "heading" | "label";
+}
+
+export interface ButtonNode {
+  type: "Button";
+  text?: string;
+  variant?: "default" | "secondary" | "outline" | "ghost" | "destructive";
+  size?: "default" | "sm" | "lg";
   onClick?: Stmt | Stmt[];
+}
+
+export interface InputNode {
+  type: "Input";
+  placeholder?: string;
+  value?: string; // state variable name to bind
+  onSubmit?: Stmt | Stmt[]; // called when Enter is pressed
+}
+
+export interface ColumnNode {
+  type: "Column";
+  gap?: "none" | "sm" | "md" | "lg";
   children?: UINode[];
 }
 
-// Runtime class placeholder
-export class Runtime {
-  constructor(config: RuntimeConfig) {}
-  run(): void {}
-  onChange(callback: () => void): () => void {
-    return () => {};
-  }
-  hasRun: boolean = false;
+export interface RowNode {
+  type: "Row";
+  gap?: "none" | "sm" | "md" | "lg";
+  align?: "start" | "center" | "end";
+  children?: UINode[];
 }
 
-export class Scope {
-  constructor(config: any) {}
+export interface CardNode {
+  type: "Card";
+  children?: UINode[];
+}
 
-  get(name: string): Literal {
-    // Placeholder implementation
-    return name;
-  }
+export interface BadgeNode {
+  type: "Badge";
+  text?: string;
+  variant?: "default" | "secondary" | "outline" | "success" | "warning" | "destructive";
+}
+
+export interface DividerNode {
+  type: "Divider";
+}
+
+// Legacy alias
+export interface ContainerNode {
+  type: "Container";
+  children?: UINode[];
+}
+
+export type UINode = 
+  | TextNode 
+  | ButtonNode 
+  | InputNode
+  | ColumnNode 
+  | RowNode
+  | CardNode
+  | BadgeNode
+  | DividerNode
+  | ContainerNode;
+
+// ============================================================================
+// Program Types
+// ============================================================================
+
+export interface Program extends CoreProgram {
+  ui: UINode;
+}
+
+export interface RuntimeConfig extends Omit<CoreRuntimeConfig, "program"> {
+  program: Program;
 }

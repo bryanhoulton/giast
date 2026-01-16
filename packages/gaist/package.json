@@ -11,7 +11,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "node dist/test-runner.js && node dist/cli.js examples",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:legacy": "node dist/test-runner.js && node dist/cli.js examples",
     "test:examples": "node dist/cli.js examples",
     "prepublishOnly": "npm run build"
   },
@@ -49,7 +51,8 @@
   ],
   "devDependencies": {
     "@types/node": "^24.0.14",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.0"
   },
   "dependencies": {},
   "repository": {
